@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALMS · Federal College of Animal Health &amp; Production Technology, Ibadan</title>
+    <meta name="description" content="Advanced Learning Management System incorporating cognitive wellness tools and adaptive learning paths for FCAH&PT Ibadan.">
+    <meta name="csrf-token" content="">
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <script src="/assets/js/auth-guard.js" data-role="guest"></script>
+</head>
+<body class="film-grain">
+
+    <!-- ── Public Header ── -->
+    <header class="public-header" style="position:fixed;top:0;left:0;width:100%;height:72px;z-index:1000;background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--clr-border-light);display:flex;align-items:center;">
+        <div class="container" style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+            <a href="/" style="display:flex;align-items:center;gap:12px;font-family:var(--font-heading);font-weight:800;font-size:1.25rem;color:var(--clr-text);text-decoration:none;">
+                <span style="background:var(--clr-primary);color:#FFFFFF;padding:6px 12px;border-radius:8px;">ALMS</span>
+                FCAH&amp;PT IB
+            </a>
+            <div style="display:flex;gap:16px;align-items:center;">
+                <a href="/register.html" class="btn btn-outline btn-sm">Register</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Split Hero Layout ── -->
+    <main style="display:flex;flex-wrap:wrap;min-height:100vh;padding-top:72px;">
+
+        <!-- Left: Cinematic Hero (58%) -->
+        <section class="hide-mobile" style="flex:0 0 58%;max-width:58%;height:calc(100vh - 72px);background:#000;overflow:hidden;position:sticky;top:72px;">
+            <div id="hero-film-container" style="width:100%;height:100%;"></div>
+        </section>
+
+        <!-- Right: Auth Form (42%) -->
+        <section style="flex:1 1 42%;max-width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:var(--sp-12) var(--sp-6);background:var(--clr-surface);min-height:calc(100vh - 72px);">
+            <div class="glass-card-strong animate-fade-in-up" style="width:100%;max-width:420px;margin:0 auto;">
+
+                <div style="margin-bottom:var(--sp-8);text-align:center;">
+                    <h1 class="hero-text-cinematic" style="font-size:2.25rem;margin-bottom:var(--sp-2);">Welcome Back</h1>
+                    <p class="text-secondary" style="font-size:0.9375rem;">Access your academic command center</p>
+                </div>
+
+                <!-- Flash messages rendered by JS from URL params -->
+                <div id="flash-container"></div>
+
+                <form id="login-form" style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                    <div class="input-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" name="email" required placeholder="your.name@fcahptib.edu.ng" class="input-field" autocomplete="email">
+                    </div>
+
+                    <div class="input-group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <label for="login-password">Password</label>
+                            <a href="/forgot-password.html" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:0.8125rem;">Forgot Password?</a>
+                        </div>
+                        <div class="input-password-wrap">
+                            <input type="password" id="login-password" name="password" required class="input-field" autocomplete="current-password">
+                            <button type="button" class="toggle-pw" aria-label="Toggle Password Visibility">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="login-remember" name="remember" style="accent-color:var(--clr-primary);width:16px;height:16px;">
+                        <label for="login-remember" style="font-size:0.875rem;color:var(--clr-text-secondary);cursor:pointer;user-select:none;">Remember me for 30 days</label>
+                    </div>
+
+                    <button type="submit" id="login-submit" class="btn btn-primary btn-full" style="margin-top:var(--sp-2);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                        Sign In
+                    </button>
+                </form>
+
+                <div style="margin-top:var(--sp-6);text-align:center;font-size:0.875rem;color:var(--clr-text-secondary);">
+                    Don't have an account? <a href="/register.html" class="btn btn-outline btn-sm" style="margin-left:4px;">Register here</a>
+                </div>
+
+                <div style="margin-top:var(--sp-8);border-top:1px solid var(--clr-border-light);padding-top:var(--sp-4);text-align:center;display:flex;flex-direction:column;gap:var(--sp-2);">
+                    <p style="font-size:0.8125rem;color:var(--clr-text-muted);margin-bottom:0;">ALMS is a product of the Federal College of Animal Health &amp; Production Technology, Ibadan. For support: <a href="mailto:support@fcahptib.edu.ng" style="color:var(--clr-primary);">support@fcahptib.edu.ng</a></p>
+                    <a href="/admin/login.html" style="font-size:0.75rem;font-family:var(--font-mono);color:var(--clr-text-muted);font-weight:600;letter-spacing:0.05em;text-transform:uppercase;text-decoration:none;transition:color 0.15s ease;" onmouseover="this.style.color='var(--clr-primary)'" onmouseout="this.style.color='var(--clr-text-muted)'">Administrator Secure Entrance</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ── System Statistics ── -->
+    <section id="stats" style="background:var(--clr-surface);border-top:1px solid var(--clr-border-light);border-bottom:1px solid var(--clr-border-light);padding:80px 0;">
+        <div class="container">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;text-align:center;">
+                <div class="reveal-element">
+                    <div style="font-size:3rem;font-family:var(--font-heading);font-weight:800;color:var(--clr-primary);">11</div>
+                    <div style="font-size:0.875rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--clr-text-secondary);margin-top:8px;">Academic Depts</div>
+                </div>
+                <div class="reveal-element">
+                    <div style="font-size:3rem;font-family:var(--font-heading);font-weight:800;color:var(--clr-primary);">50+</div>
+                    <div style="font-size:0.875rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--clr-text-secondary);margin-top:8px;">Approved Lecturers</div>
+                </div>
+                <div class="reveal-element">
+                    <div style="font-size:3rem;font-family:var(--font-heading);font-weight:800;color:var(--clr-primary);">2,000+</div>
+                    <div style="font-size:0.875rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--clr-text-secondary);margin-top:8px;">Active Students</div>
+                </div>
+                <div class="reveal-element">
+                    <div style="font-size:3rem;font-family:var(--font-heading);font-weight:800;color:var(--clr-primary);">100%</div>
+                    <div style="font-size:0.875rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--clr-text-secondary);margin-top:8px;">Digital Learning</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Public Footer ── -->
+    <footer style="background:#000;color:#FFF;padding:60px 0;font-size:0.875rem;">
+        <div class="container" style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:40px;">
+            <div>
+                <a href="/" style="font-family:var(--font-heading);font-weight:800;font-size:1.5rem;color:#FFF;display:flex;align-items:center;gap:8px;text-decoration:none;">
+                    <span style="background:var(--clr-primary);padding:4px 10px;border-radius:6px;">ALMS</span>
+                </a>
+                <p style="margin-top:12px;color:#8E8E93;max-width:280px;">Federal College of Animal Health &amp; Production Technology, Ibadan, Nigeria.</p>
+            </div>
+            <div style="display:flex;gap:40px;flex-wrap:wrap;">
+                <div>
+                    <div style="font-weight:700;margin-bottom:16px;font-family:var(--font-heading);">Platform</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;color:#8E8E93;">
+                        <a href="/register.html" style="color:#8E8E93;text-decoration:none;">Register</a>
+                        <a href="/index.html" style="color:#8E8E93;text-decoration:none;">Sign In</a>
+                        <a href="/admin/login.html" style="color:#8E8E93;text-decoration:none;">Admin</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container" style="margin-top:40px;border-top:1px solid #222;padding-top:20px;text-align:center;color:#8E8E93;font-size:0.75rem;">
+            &copy; <span id="footer-year"></span> Advanced Learning Management System (ALMS). All rights reserved &mdash; FCAH&amp;PT Ibadan.
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/herofilm.js"></script>
+    <script>
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+    // ── Parse URL params for flash messages ──
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const errorKey = params.get('error');
+        const msgKey   = params.get('msg');
+        const errors = {
+            missing_fields:       'Please fill in all required fields.',
+            invalid_email:        'Please enter a valid email address.',
+            invalid_credentials:  'Email or password is incorrect.',
+            account_locked:       'Account locked. Try again in 15 minutes.',
+            pending_approval:     'Your account is awaiting admin approval.',
+            account_suspended:    'Your account has been suspended. Contact administrator.',
+            session_expired:      'Your session has expired. Please log in again.',
+            forbidden:            'Access denied. You do not have permission to view that page.',
+            csrf_failed:          'Security token verification failed. Please try again.',
+            invalid_reset_token:  'Password reset link is invalid or has already been used.',
+            reset_token_expired:  'Password reset link has expired. Please request a new one.'
+        };
+        const successes = {
+            logged_out:         'You have been signed out successfully.',
+            registered:         'Registration complete! An admin will review and approve your lecturer account shortly.',
+            registered_student: 'Registration complete! You can now log in.',
+            password_reset:     'Password reset successful. You can now log in with your new password.'
+        };
+        const container = document.getElementById('flash-container');
+        if (errorKey && errors[errorKey]) {
+            container.innerHTML = `<div class="flash-msg error"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span>${errors[errorKey]}</span></div>`;
+        }
+        if (msgKey && successes[msgKey]) {
+            container.innerHTML = `<div class="flash-msg success"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>${successes[msgKey]}</span></div>`;
+        }
+    })();
+
+    // ── Fetch CSRF then wire login form ──
+    let csrfToken = '';
+    fetch('/api/session.php', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => { csrfToken = d.csrf_token || ''; document.querySelector('meta[name="csrf-token"]').content = csrfToken; })
+        .catch(() => {});
+
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('login-submit');
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin-slow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Signing in...`;
+
+        const flash = document.getElementById('flash-container');
+
+        try {
+            const res = await fetch('/api/auth.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action:      'login',
+                    email:       document.getElementById('login-email').value.trim(),
+                    password:    document.getElementById('login-password').value,
+                    csrf_token:  csrfToken,
+                    remember:    document.getElementById('login-remember').checked ? 1 : 0
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const role = data.role || data.user?.role;
+                if (role === 'admin')    { window.location.href = '/admin/dashboard.html'; return; }
+                if (role === 'lecturer') { window.location.href = '/lecturer/dashboard.html'; return; }
+                window.location.href = '/student/dashboard.html';
+            } else {
+                const msgs = {
+                    invalid_credentials: 'Email or password is incorrect.',
+                    account_locked:      'Account locked. Try again in 15 minutes.',
+                    pending_approval:    'Your account is awaiting admin approval.',
+                    account_suspended:   'Your account has been suspended.',
+                    csrf_failed:         'Security token failed. Please refresh and try again.'
+                };
+                const msg = msgs[data.error] || data.message || 'Login failed. Please try again.';
+                flash.innerHTML = `<div class="flash-msg error"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span>${msg}</span></div>`;
+                btn.disabled = false;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg> Sign In`;
+            }
+        } catch(err) {
+            flash.innerHTML = `<div class="flash-msg error"><span>Network error. Please check your connection.</span></div>`;
+            btn.disabled = false;
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg> Sign In`;
+        }
+    });
+    </script>
+</body>
+</html>

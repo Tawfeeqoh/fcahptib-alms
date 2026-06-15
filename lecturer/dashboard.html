@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecturer Dashboard — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="dashboard">
+
+<!-- Pending Verification Overlay -->
+<div id="pending-view" style="display:none; background:var(--clr-bg); justify-content:center; align-items:center; min-height:100vh; padding: var(--sp-6);">
+    <div class="glass-card-strong text-center" style="max-width:500px; padding:var(--sp-12);">
+        <div style="font-size:4rem; margin-bottom:var(--sp-4);">⏳</div>
+        <h1 class="hero-text-cinematic mb-4" style="font-size:1.75rem;">Account Verification Pending</h1>
+        <p class="text-secondary" style="line-height:1.6; margin-bottom:var(--sp-6);">
+            Welcome <span id="pending-lecturer-name">Lecturer</span>! Your lecturer registration has been logged. An administrator must verify and approve your staff profile before you can access the curriculum tools.
+        </p>
+        <button onclick="logoutUser()" class="btn btn-outline">Sign Out</button>
+    </div>
+</div>
+
+<div class="dashboard-shell" id="dashboard-shell-view" style="display:none;">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            
+            <!-- Stats Widgets Row -->
+            <div class="stats-row mb-6">
+                <div class="stat-card">
+                    <div class="stat-card-icon blue">📖</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-courses">—</div>
+                        <div class="stat-card-label">Active Courses</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-icon green">🎓</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-students">—</div>
+                        <div class="stat-card-label">Teachable Students</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon red">🧠</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-stress">—</div>
+                        <div class="stat-card-label">High Stress Load</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon amber">🔔</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-submissions">—</div>
+                        <div class="stat-card-label">Recent Submissions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2/3 + 1/3 Content Layout -->
+            <div class="content-grid">
+                
+                <!-- Left Pane: Course List & Submissions -->
+                <div style="display:flex; flex-direction:column; gap:var(--sp-6);">
+                    
+                    <!-- Teachable Course Portfolios -->
+                    <div class="dashboard-widget">
+                        <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:var(--sp-4);">My Course Portfolios</h3>
+                        <div id="courses-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                            <!-- Skeletons -->
+                            <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Submissions -->
+                    <div class="dashboard-widget" style="overflow-x:auto;">
+                        <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:var(--sp-4);">Recent Submissions</h3>
+                        <div id="submissions-container">
+                            <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Pane: Wellness Aggregations -->
+                <div class="dashboard-widget">
+                    <h3 style="font-size:1.125rem; font-weight:700; margin-bottom: 2px;">Teachable Wellness Trends</h3>
+                    <p class="text-muted" style="font-size:0.75rem; margin-bottom:var(--sp-6);">Anonymized metrics aggregated from your student cohort.</p>
+
+                    <!-- Pace Distribution -->
+                    <div style="margin-bottom:var(--sp-6);">
+                        <h4 style="font-size:0.875rem; font-weight:600; margin-bottom:12px;">Class Pacing Profiles</h4>
+                        
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
+                                    <span>⚡ Express Mode</span>
+                                    <span class="font-mono-data" id="pace-express-pct">0%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-bar-fill amber" id="pace-express-bar" style="width:0%;"></div></div>
+                            </div>
+
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
+                                    <span>📖 Standard Mode</span>
+                                    <span class="font-mono-data" id="pace-standard-pct">0%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-bar-fill blue" id="pace-standard-bar" style="width:0%;"></div></div>
+                            </div>
+
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
+                                    <span>🔬 Deep-Dive Mode</span>
+                                    <span class="font-mono-data" id="pace-deep-pct">0%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-bar-fill" id="pace-deep-bar" style="width:0%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stress Distribution -->
+                    <div>
+                        <h4 style="font-size:0.875rem; font-weight:600; margin-bottom:12px;">Stress Indicator (Last 7 Days)</h4>
+                        
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
+                                    <span>🟢 Low Stress</span>
+                                    <span class="font-mono-data" id="stress-low-pct">0%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-bar-fill green" id="stress-low-bar" style="width:0%;"></div></div>
+                            </div>
+
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
+                                    <span>🟡 Moderate Stress</span>
+                                    <span class="font-mono-data" id="stress-medium-pct">0%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-bar-fill amber" id="stress-medium-bar" style="width:0%;"></div></div>
+                            </div>
+
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
+                                    <span>🔴 High Stress</span>
+                                    <span class="font-mono-data" id="stress-high-pct">0%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-bar-fill" id="stress-high-bar" style="width:0%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/lecturer-dashboard.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    if (data.status === 'pending') {
+        const u = data.user || {};
+        document.getElementById('pending-lecturer-name').textContent = `${escHtml(u.title)} ${escHtml(u.first_name)} ${escHtml(u.last_name)}`;
+        document.getElementById('pending-view').style.display = 'flex';
+        document.getElementById('dashboard-shell-view').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('pending-view').style.display = 'none';
+    document.getElementById('dashboard-shell-view').style.display = 'block';
+
+    const courses = data.assigned_courses || [];
+    const submissions = data.submissions || [];
+    const wellness = data.wellness_stats || {};
+    const stress = data.stress_stats || {};
+
+    // Compute sums for ratios
+    const totalPace = (wellness.express || 0) + (wellness.standard || 0) + (wellness.deep || 0);
+    const totalStress = (stress.low || 0) + (stress.medium || 0) + (stress.high || 0);
+
+    const highStressCount = stress.high || 0;
+    const stressRatio = totalStress > 0 ? Math.round((highStressCount / totalStress) * 100) : 0;
+
+    // Header metrics
+    document.getElementById('stat-courses').textContent = courses.length;
+    document.getElementById('stat-students').textContent = data.student_count || 0;
+    document.getElementById('stat-stress').textContent = stressRatio + '%';
+    document.getElementById('stat-submissions').textContent = submissions.length;
+
+    // Course portfolios
+    const coursesCont = document.getElementById('courses-container');
+    if (courses.length === 0) {
+        coursesCont.innerHTML = `<p class="text-muted text-sm" style="grid-column:1/-1;">No courses assigned to your portfolio yet. Contact administrator to assign courses.</p>`;
+    } else {
+        coursesCont.innerHTML = courses.map(ac => `
+            <div class="course-card reveal-element depth-lift">
+                <div class="course-card-header">
+                    <div class="course-card-icon">📚</div>
+                    <span class="badge badge-neutral">${escHtml(ac.level)}</span>
+                </div>
+                <div>
+                    <div class="course-card-code">${escHtml(ac.course_code)}</div>
+                    <h4 class="course-card-title">${escHtml(ac.course_name)}</h4>
+                </div>
+                <div style="border-top:1px solid var(--clr-border-light); padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--clr-text-secondary);">
+                    <span>${escHtml(ac.dept_name)}</span>
+                    <a href="/lecturer/course-builder.html?course_id=${ac.course_id}" style="font-weight:600; text-decoration:none; color:var(--clr-primary);">Edit Materials &rarr;</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Submissions
+    const subCont = document.getElementById('submissions-container');
+    if (submissions.length === 0) {
+        subCont.innerHTML = `<p class="text-muted text-sm">No recent assignments submitted.</p>`;
+    } else {
+        subCont.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Assignment</th>
+                        <th>Submission Time</th>
+                        <th style="text-align:right;">Grade Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${submissions.map(sub => `
+                        <tr>
+                            <td><strong>${escHtml(sub.first_name)} ${escHtml(sub.last_name)}</strong></td>
+                            <td class="font-mono-data">${escHtml(sub.course_code)}</td>
+                            <td>${escHtml(sub.assignment_title)}</td>
+                            <td class="font-mono-data text-muted" data-date="${escHtml(sub.submitted_at)}" data-date-style="datetime"></td>
+                            <td style="text-align:right;">
+                                ${sub.grade !== null ? `
+                                    <span class="badge badge-green">${sub.grade} points</span>
+                                ` : `
+                                    <span class="badge badge-amber">Ungraded</span>
+                                `}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Class Pacing Profiles
+    const expressPct = totalPace > 0 ? Math.round(((wellness.express || 0) / totalPace) * 100) : 0;
+    const standardPct = totalPace > 0 ? Math.round(((wellness.standard || 0) / totalPace) * 100) : 0;
+    const deepPct = totalPace > 0 ? Math.round(((wellness.deep || 0) / totalPace) * 100) : 0;
+
+    document.getElementById('pace-express-pct').textContent = expressPct + '%';
+    document.getElementById('pace-standard-pct').textContent = standardPct + '%';
+    document.getElementById('pace-deep-pct').textContent = deepPct + '%';
+
+    gsap.to('#pace-express-bar', { width: expressPct + '%', duration: 0.8 });
+    gsap.to('#pace-standard-bar', { width: standardPct + '%', duration: 0.8 });
+    gsap.to('#pace-deep-bar', { width: deepPct + '%', duration: 0.8 });
+
+    // Stress Indicator
+    const lowStressPct = totalStress > 0 ? Math.round(((stress.low || 0) / totalStress) * 100) : 0;
+    const medStressPct = totalStress > 0 ? Math.round(((stress.medium || 0) / totalStress) * 100) : 0;
+    const highStressPct = totalStress > 0 ? Math.round(((stress.high || 0) / totalStress) * 100) : 0;
+
+    document.getElementById('stress-low-pct').textContent = lowStressPct + '%';
+    document.getElementById('stress-medium-pct').textContent = medStressPct + '%';
+    document.getElementById('stress-high-pct').textContent = highStressPct + '%';
+
+    gsap.to('#stress-low-bar', { width: lowStressPct + '%', duration: 0.8 });
+    gsap.to('#stress-medium-bar', { width: medStressPct + '%', duration: 0.8 });
+    gsap.to('#stress-high-bar', { width: highStressPct + '%', duration: 0.8 });
+
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+});
+
+async function logoutUser() {
+    try {
+        const res = await fetch('/api/auth.php?action=logout', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            }
+        });
+        const d = await res.json();
+        if (d.success) {
+            window.location.href = '/index.html?msg=logged_out';
+        }
+    } catch(e) {}
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

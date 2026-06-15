@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="profile">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in" style="max-width:700px;">
+            <div class="page-header">
+                <h1 class="page-title">My Profile</h1>
+                <p class="page-subtitle">Staff identity and primary department.</p>
+            </div>
+            
+            <div class="dashboard-widget">
+                <div class="input-group" style="margin-bottom:var(--sp-4);">
+                    <label>Name</label>
+                    <input class="input-field" id="profile-name" readonly value="Loading...">
+                </div>
+                <div class="input-group" style="margin-bottom:var(--sp-4);">
+                    <label>Email</label>
+                    <input class="input-field" id="profile-email" readonly value="Loading...">
+                </div>
+                <div class="input-group">
+                    <label>Primary Department</label>
+                    <input class="input-field" id="profile-dept" readonly value="Loading...">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/lecturer-profile.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    const u = data.user || {};
+    const titleStr = u.title ? u.title + ' ' : '';
+    document.getElementById('profile-name').value = `${titleStr}${u.first_name} ${u.last_name}`;
+    document.getElementById('profile-email').value = u.email || '';
+    document.getElementById('profile-dept').value = u.department_name || 'Pending assignment';
+});
+</script>
+</body>
+</html>

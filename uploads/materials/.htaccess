@@ -1,0 +1,3 @@
+# Block direct access to uploaded materials
+Order allow,deny
+Deny from all

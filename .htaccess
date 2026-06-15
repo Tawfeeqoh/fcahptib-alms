@@ -1,0 +1,34 @@
+# ALMS — Apache Rewrite & Security Rules
+RewriteEngine On
+
+# Force HTTPS (uncomment on production)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Block direct access to sensitive files
+<FilesMatch "\.(sql|log|env|md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect config files
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "mailer.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Prevent directory listing
+Options -Indexes
+
+# Redirect old PHP views to HTML equivalents (excluding /api/)
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^(.*)\.php$ /$1.html [R=301,L]
+
+# Custom error pages
+ErrorDocument 403 /index.html?error=forbidden
+ErrorDocument 404 /index.html?error=not_found

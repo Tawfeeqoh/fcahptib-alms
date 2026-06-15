@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Onboarding — ALMS</title>
+    <meta name="description" content="Complete your ALMS student profile setup.">
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .onboard-card { background: var(--clr-surface); border-radius: var(--radius-2xl); border: 2px solid transparent; cursor: pointer; padding: var(--sp-5); text-align: center; transition: all 0.2s var(--ease-out); }
+        .onboard-card:hover { border-color: var(--clr-primary); transform: translateY(-4px); }
+        .onboard-card.selected { border-color: var(--clr-primary); background: var(--clr-primary-light); }
+        .vark-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-4); }
+        .pace-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+        .who5-option { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); border-radius: var(--radius-md); border: 2px solid var(--clr-border-light); cursor: pointer; transition: all 0.15s; }
+        .who5-option:hover { border-color: var(--clr-primary); }
+        .who5-option.selected { border-color: var(--clr-primary); background: var(--clr-primary-light); }
+        .step-container { display: none; }
+        .step-container.active { display: block; animation: fadeInUp 0.4s var(--ease-out); }
+        canvas#onboard-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5; }
+    </style>
+</head>
+<body style="background:var(--clr-bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--sp-6);">
+    <canvas id="onboard-canvas"></canvas>
+
+    <div class="glass-card-strong animate-fade-in-up" style="width:100%;max-width:620px;position:relative;z-index:1;">
+
+        <!-- Header -->
+        <div style="text-align:center;margin-bottom:var(--sp-6);">
+            <a href="/" style="font-family:var(--font-heading);font-weight:800;font-size:1.25rem;color:var(--clr-text);display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:var(--sp-4);">
+                <span style="background:var(--clr-primary);color:#FFF;padding:4px 8px;border-radius:6px;">ALMS</span>
+            </a>
+            <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:4px;">Welcome to ALMS! 🎓</h1>
+            <p class="text-secondary text-sm">Let's personalize your learning experience — just 3 quick steps.</p>
+        </div>
+
+        <!-- Progress Dots -->
+        <div class="step-dots" style="margin-bottom:var(--sp-6);">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+
+        <div id="flash-container"></div>
+
+        <!-- Step 1: VARK -->
+        <div class="step-container active" id="step-1">
+            <h2 style="font-size:1.125rem;font-weight:700;margin-bottom:4px;">How do you learn best? 🧠</h2>
+            <p class="text-secondary text-sm" style="margin-bottom:var(--sp-5);">Select your dominant learning style. We'll adapt lesson content to match your preference.</p>
+            <div class="vark-grid" id="vark-grid">
+                <div class="onboard-card" onclick="selectVark('V')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">👁️</div>
+                    <h3 style="font-size:1rem;font-weight:700;color:#7C3AED;">Visual</h3>
+                    <p class="text-secondary text-sm">Diagrams, charts, colours and spatial arrangements help you understand best.</p>
+                </div>
+                <div class="onboard-card" onclick="selectVark('A')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">🎧</div>
+                    <h3 style="font-size:1rem;font-weight:700;color:#DB2777;">Auditory</h3>
+                    <p class="text-secondary text-sm">Explanations, discussion, and listening to lectures help you retain information.</p>
+                </div>
+                <div class="onboard-card" onclick="selectVark('R')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">📖</div>
+                    <h3 style="font-size:1rem;font-weight:700;color:#2563EB;">Reading/Writing</h3>
+                    <p class="text-secondary text-sm">Reading, note-taking, and written text-based content suit you best.</p>
+                </div>
+                <div class="onboard-card" onclick="selectVark('K')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">⚙️</div>
+                    <h3 style="font-size:1rem;font-weight:700;color:#059669;">Kinesthetic</h3>
+                    <p class="text-secondary text-sm">Hands-on practice, examples, and real-world applications drive your learning.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Pace -->
+        <div class="step-container" id="step-2">
+            <h2 style="font-size:1.125rem;font-weight:700;margin-bottom:4px;">Choose your learning pace ⚡</h2>
+            <p class="text-secondary text-sm" style="margin-bottom:var(--sp-5);">This sets how content is presented in lessons. You can always change it later in your profile.</p>
+            <div class="pace-grid">
+                <div class="onboard-card" onclick="selectPace('express')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">⚡</div>
+                    <h3 style="font-size:0.9375rem;font-weight:700;">Express</h3>
+                    <p class="text-secondary text-xs">Compact bullet points and key takeaways only.</p>
+                </div>
+                <div class="onboard-card selected" onclick="selectPace('standard')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">📖</div>
+                    <h3 style="font-size:0.9375rem;font-weight:700;">Standard</h3>
+                    <p class="text-secondary text-xs">Full lesson text with clear explanations.</p>
+                </div>
+                <div class="onboard-card" onclick="selectPace('deep')">
+                    <div style="font-size:2rem;margin-bottom:var(--sp-2);">🔬</div>
+                    <h3 style="font-size:0.9375rem;font-weight:700;">Deep Dive</h3>
+                    <p class="text-secondary text-xs">Extended content, context, and deeper elaboration.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: WHO-5 Wellness -->
+        <div class="step-container" id="step-3">
+            <h2 style="font-size:1.125rem;font-weight:700;margin-bottom:4px;">Quick wellness check 💙</h2>
+            <p class="text-secondary text-sm" style="margin-bottom:var(--sp-5);">Over the last two weeks, how often have you felt the following? Answers help us personalise AI recommendations.</p>
+            <div id="who5-questions" style="display:flex;flex-direction:column;gap:var(--sp-4);"></div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="display:flex;justify-content:space-between;margin-top:var(--sp-8);gap:var(--sp-4);">
+            <button class="btn btn-outline" id="back-btn" style="display:none;" onclick="prevStep()">Back</button>
+            <div style="flex:1;"></div>
+            <button class="btn btn-primary" id="next-btn" onclick="nextStep()">Continue →</button>
+            <button class="btn btn-success" id="finish-btn" style="display:none;" onclick="finishOnboarding()">
+                🚀 Start Learning!
+            </button>
+        </div>
+    </div>
+
+    <script src="/assets/js/main.js"></script>
+    <script>
+    const WHO5_QUESTIONS = [
+        { id: 1, text: 'I have felt cheerful and in good spirits.' },
+        { id: 2, text: 'I have felt calm and relaxed.' },
+        { id: 3, text: 'I have felt active and vigorous.' },
+        { id: 4, text: 'I woke up feeling fresh and rested.' },
+        { id: 5, text: 'My daily life has been filled with things that interest me.' },
+    ];
+    const WHO5_OPTS = [
+        { value: 5, label: 'All of the time' },
+        { value: 4, label: 'Most of the time' },
+        { value: 3, label: 'More than half of the time' },
+        { value: 2, label: 'Less than half of the time' },
+        { value: 1, label: 'Some of the time' },
+        { value: 0, label: 'At no time' },
+    ];
+
+    let currentStep = 1, vark = null, pace = 'standard', who5Answers = {};
+    let csrfToken = '';
+    fetch('/api/session.php', {credentials:'include'}).then(r=>r.json()).then(d=>{csrfToken=d.csrf_token||'';}).catch(()=>{});
+
+    // Build WHO-5 questions
+    const qContainer = document.getElementById('who5-questions');
+    WHO5_QUESTIONS.forEach(q => {
+        const el = document.createElement('div');
+        el.innerHTML = `<p style="font-weight:600;font-size:0.875rem;margin-bottom:var(--sp-2);">${q.text}</p>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            ${WHO5_OPTS.map(opt => `<label class="who5-option" id="who5-q${q.id}-v${opt.value}" onclick="selectWho5(${q.id}, ${opt.value})">
+                <input type="radio" name="who5_q${q.id}" value="${opt.value}" style="display:none;">
+                <span style="font-size:0.875rem;">${opt.label}</span>
+            </label>`).join('')}
+        </div>`;
+        qContainer.appendChild(el);
+    });
+
+    function selectVark(v) { vark=v; document.querySelectorAll('#vark-grid .onboard-card').forEach(c=>c.classList.remove('selected')); event.currentTarget.classList.add('selected'); }
+    function selectPace(p) { pace=p; document.querySelectorAll('.pace-grid .onboard-card').forEach(c=>c.classList.remove('selected')); event.currentTarget.classList.add('selected'); }
+    function selectWho5(qId, val) { who5Answers[qId]=val; document.querySelectorAll(`[id^="who5-q${qId}"]`).forEach(el=>el.classList.remove('selected')); document.getElementById(`who5-q${qId}-v${val}`).classList.add('selected'); }
+
+    function updateDots() {
+        document.querySelectorAll('.step-dot').forEach((d,i) => { d.classList.remove('active','completed'); if(i===currentStep-1)d.classList.add('active'); else if(i<currentStep-1)d.classList.add('completed'); });
+    }
+
+    function nextStep() {
+        const flash = document.getElementById('flash-container');
+        if (currentStep === 1 && !vark) { flash.innerHTML = '<div class="flash-msg error"><span>Please select a learning style to continue.</span></div>'; return; }
+        flash.innerHTML = '';
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        currentStep++;
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        updateDots();
+        document.getElementById('back-btn').style.display = 'inline-flex';
+        if (currentStep === 3) { document.getElementById('next-btn').style.display = 'none'; document.getElementById('finish-btn').style.display = 'inline-flex'; }
+    }
+
+    function prevStep() {
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        currentStep--;
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        updateDots();
+        if (currentStep === 1) document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'inline-flex';
+        document.getElementById('finish-btn').style.display = 'none';
+    }
+
+    async function finishOnboarding() {
+        const flash = document.getElementById('flash-container');
+        const who5Score = Object.values(who5Answers).reduce((s,v)=>s+v,0);
+        const btn = document.getElementById('finish-btn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+        try {
+            const res = await fetch('/api/student-onboarding.php', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vark_style: vark, current_pace: pace, who5_score: who5Score, csrf_token: csrfToken })
+            });
+            const data = await res.json();
+            if (data.success) { window.location.href = '/student/dashboard.html'; }
+            else { flash.innerHTML = `<div class="flash-msg error"><span>${data.message || 'Setup failed. Please try again.'}</span></div>`; btn.disabled = false; btn.textContent = '🚀 Start Learning!'; }
+        } catch(e) { flash.innerHTML = '<div class="flash-msg error"><span>Network error. Please try again.</span></div>'; btn.disabled = false; btn.textContent = '🚀 Start Learning!'; }
+    }
+
+    // Synapse canvas
+    (function() {
+        const c = document.getElementById('onboard-canvas'); if(!c) return;
+        const ctx = c.getContext('2d'); const nodes = []; const N=35, D=100;
+        function resize(){c.width=window.innerWidth;c.height=window.innerHeight;} resize(); window.addEventListener('resize',resize);
+        for(let i=0;i<N;i++) nodes.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()*.5-.25),vy:(Math.random()*.5-.25),r:Math.random()*2+1});
+        function draw(){ctx.clearRect(0,0,c.width,c.height);nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>c.width)n.vx*=-1;if(n.y<0||n.y>c.height)n.vy*=-1;ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle='rgba(209,0,0,0.25)';ctx.fill();});for(let i=0;i<nodes.length;i++){for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,dist=Math.hypot(dx,dy);if(dist<D){ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.strokeStyle=`rgba(209,0,0,${(1-dist/D)*.15})`;ctx.lineWidth=0.8;ctx.stroke();}}}requestAnimationFrame(draw);}
+        draw();
+    })();
+    </script>
+</body>
+</html>

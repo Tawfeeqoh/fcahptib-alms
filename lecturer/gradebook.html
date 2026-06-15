@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Gradebook — ALMS</title>
+    <link class="styles" rel="stylesheet" href="/assets/css/globals.css">
+    <link class="styles" rel="stylesheet" href="/assets/css/components.css">
+    <link class="styles" rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="gradebook">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">Class Gradebook</h1>
+                <p class="page-subtitle">A unified view of student quiz and assignment performance across your assigned courses.</p>
+            </div>
+            
+            <div class="dashboard-widget" style="overflow-x:auto;">
+                <div id="gradebook-container">
+                    <div class="animate-shimmer" style="height:200px;border-radius:var(--radius-xl);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/lecturer-gradebook.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    const container = document.getElementById('gradebook-container');
+    const students = data.students || [];
+
+    if (students.length === 0) {
+        container.innerHTML = `<p class="text-muted text-sm">No students are currently mapped to your assigned courses.</p>`;
+    } else {
+        container.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Department</th>
+                        <th>Quiz Avg</th>
+                        <th>Assignment Avg</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${students.map(student => `
+                        <tr>
+                            <td>
+                                <strong>${escHtml(student.last_name)} ${escHtml(student.first_name)}</strong><br>
+                                <span class="font-mono-data text-muted">${escHtml(student.matric_number)}</span>
+                            </td>
+                            <td>${escHtml(student.department_name)}</td>
+                            <td class="font-mono-data">${student.quiz_average !== null ? Math.round(parseFloat(student.quiz_average)) + '%' : 'N/A'}</td>
+                            <td class="font-mono-data">${student.assignment_average !== null ? Math.round(parseFloat(student.assignment_average)) + ' pts' : 'N/A'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+});
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

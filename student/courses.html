@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Courses — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+</head>
+<body class="film-grain" data-page="courses">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">My Courses</h1>
+                <p class="page-subtitle">Courses registered in your department and level</p>
+            </div>
+
+            <div id="courses-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-5);">
+                <!-- Skeletons -->
+                <div class="animate-shimmer" style="height:200px;border-radius:var(--radius-2xl);"></div>
+                <div class="animate-shimmer" style="height:200px;border-radius:var(--radius-2xl);"></div>
+                <div class="animate-shimmer" style="height:200px;border-radius:var(--radius-2xl);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const ICONS = ['📚','🧬','🔬','📐','🌿','🐾','🌊','📊','💻','🏥','🌾'];
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/student-courses.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(e) { return; }
+    if (!data.success) { document.getElementById('courses-grid').innerHTML = '<p class="text-muted">Could not load courses.</p>'; return; }
+    const courses = data.courses || [];
+    if (!courses.length) {
+        document.getElementById('courses-grid').innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1;">
+                <div class="empty-state-icon" style="font-size:2.5rem;">📭</div>
+                <h3 class="empty-state-title">No Courses Yet</h3>
+                <p class="empty-state-desc">Courses for your department and level will appear here once your lecturer adds content.</p>
+            </div>`;
+        return;
+    }
+    document.getElementById('courses-grid').innerHTML = courses.map((c, i) => {
+        const pct = c.total_lessons > 0 ? Math.round((c.completed_lessons / c.total_lessons) * 100) : 0;
+        return `
+        <div class="course-card reveal-element depth-lift">
+            <div class="course-card-header">
+                <div class="course-card-icon">${ICONS[i % ICONS.length]}</div>
+                <span class="badge badge-neutral">${escHtml(c.course_code)}</span>
+            </div>
+            <div>
+                <div class="course-card-title">${escHtml(c.course_name)}</div>
+                <div class="course-card-code">${c.completed_lessons || 0} / ${c.total_lessons || 0} lessons</div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span style="font-size:0.75rem;color:var(--clr-text-muted);">Progress</span>
+                    <span class="font-mono-data" style="font-size:0.75rem;color:var(--clr-primary);">${pct}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+            </div>
+            <a href="/student/lesson.html?course_id=${c.id}" class="btn btn-primary btn-sm">
+                ${pct > 0 ? 'Continue' : 'Start'} Learning →
+            </a>
+        </div>`;
+    }).join('');
+    document.querySelectorAll('.reveal-element').forEach((el, i) => {
+        el.style.animationDelay = `${i * 0.08}s`;
+    });
+});
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

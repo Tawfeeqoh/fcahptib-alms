@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="users">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--sp-4);">
+                <div>
+                    <h1 class="page-title">User Management</h1>
+                    <p class="page-subtitle">Manage all registered users</p>
+                </div>
+                <div style="display:flex;gap:var(--sp-3);">
+                    <div class="tabs" style="margin-bottom:0;">
+                        <button class="tab-btn active" onclick="filterRole('all',this)">All</button>
+                        <button class="tab-btn" onclick="filterRole('student',this)">Students</button>
+                        <button class="tab-btn" onclick="filterRole('lecturer',this)">Lecturers</button>
+                    </div>
+                    <input type="search" id="user-search" class="input-field" placeholder="Search..." style="max-width:200px;">
+                </div>
+            </div>
+            <div id="flash-global"></div>
+
+            <div class="dashboard-widget" style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Name</th><th>Email</th><th>Role</th><th>Dept.</th><th>Status</th><th>Joined</th><th></th>
+                    </tr></thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="7" style="text-align:center;color:var(--clr-text-muted);padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allUsers = [], activeRole = 'all';
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/admin-users.php', { credentials: 'include' });
+        const data = await res.json();
+        allUsers = data.users || [];
+        renderTable();
+    } catch(e) { document.getElementById('users-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;">Could not load users.</td></tr>'; }
+});
+
+document.getElementById('user-search').addEventListener('input', function() { renderTable(this.value.toLowerCase()); });
+
+function filterRole(role, btn) {
+    activeRole = role;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+}
+
+function renderTable(query = '') {
+    let users = allUsers;
+    if (activeRole !== 'all') users = users.filter(u => u.role === activeRole);
+    if (query) users = users.filter(u => `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase().includes(query));
+
+    if (!users.length) { document.getElementById('users-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--clr-text-muted);padding:40px;">No users found.</td></tr>'; return; }
+    document.getElementById('users-tbody').innerHTML = users.map(u => {
+        const statusBadge = u.status === 'active' ? 'badge-green' : u.status === 'pending' ? 'badge-amber' : 'badge-red';
+        return `<tr>
+            <td><strong>${escHtml(u.first_name)} ${escHtml(u.last_name)}</strong></td>
+            <td style="font-size:0.8125rem;">${escHtml(u.email)}</td>
+            <td><span class="badge badge-neutral">${escHtml(u.role.toUpperCase())}</span></td>
+            <td style="font-size:0.8125rem;">${escHtml(u.department_name||'—')}</td>
+            <td><span class="badge ${statusBadge}">${capitalize(u.status||'active')}</span></td>
+            <td style="font-size:0.75rem;color:var(--clr-text-muted);">${u.created_at ? new Intl.DateTimeFormat('en-NG',{dateStyle:'short'}).format(new Date(u.created_at)) : '—'}</td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    ${u.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="updateUser(${u.id},'active')">Approve</button>` : ''}
+                    ${u.status === 'active'  ? `<button class="btn btn-ghost btn-sm" onclick="updateUser(${u.id},'suspended')">Suspend</button>` : ''}
+                    ${u.status === 'suspended'?`<button class="btn btn-ghost btn-sm" onclick="updateUser(${u.id},'active')">Restore</button>` : ''}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+async function updateUser(id, status) {
+    if (!confirm(`Set this user to "${status}"?`)) return;
+    try {
+        const res = await fetch('/api/admin-users.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update_status', user_id: id, status, csrf_token: window.ALMS?.csrfToken || '' })
+        });
+        const data = await res.json();
+        if (data.success) { const u = allUsers.find(u => u.id === id); if (u) u.status = status; renderTable(); }
+        else document.getElementById('flash-global').innerHTML = `<div class="flash-msg error"><span>${data.message || 'Update failed.'}</span></div>`;
+    } catch(e) {}
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

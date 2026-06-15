@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Analytics — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="analytics">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">Class Analytics</h1>
+                <p class="page-subtitle">Engagement and performance insights across your assigned course portfolios.</p>
+            </div>
+            
+            <div id="analytics-container" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
+                <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/lecturer-analytics.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    const container = document.getElementById('analytics-container');
+    const courses = data.courses || [];
+    if (courses.length === 0) {
+        container.outerHTML = `
+            <div class="empty-state card-flat">
+                <div class="empty-state-title">No Assigned Courses</div>
+                <p class="empty-state-desc">Analytics will appear when courses are assigned to you.</p>
+            </div>`;
+    } else {
+        container.innerHTML = courses.map(course => `
+            <article class="course-card reveal-element depth-lift">
+                <div class="course-card-header" style="margin-bottom: var(--sp-4);">
+                    <div class="course-card-code">${escHtml(course.course_code)}</div>
+                </div>
+                <h2 class="course-card-title">${escHtml(course.course_name)}</h2>
+                <p class="text-muted" style="font-size:0.8125rem; margin-bottom: var(--sp-4);">${escHtml(course.department_name)}</p>
+                <div style="border-top:1px solid var(--clr-border-light); padding-top:12px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; text-align:center;">
+                    <div><strong class="font-mono-data" style="font-size: 1.1rem; color: var(--clr-primary);">${parseInt(course.students)}</strong><br><span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--clr-text-muted);">Students</span></div>
+                    <div><strong class="font-mono-data" style="font-size: 1.1rem; color: var(--clr-success);">${course.quiz_average !== null ? Math.round(parseFloat(course.quiz_average)) + '%' : 'N/A'}</strong><br><span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--clr-text-muted);">Quiz Avg</span></div>
+                    <div><strong class="font-mono-data" style="font-size: 1.1rem; color: var(--clr-info);">${parseInt(course.submissions)}</strong><br><span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--clr-text-muted);">Submits</span></div>
+                </div>
+            </article>
+        `).join('');
+    }
+});
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

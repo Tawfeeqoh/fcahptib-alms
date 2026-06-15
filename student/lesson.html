@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .lesson-body { line-height: 1.85; font-size: 1rem; color: var(--clr-text); }
+        .lesson-body h3 { font-size: 1.25rem; margin: var(--sp-6) 0 var(--sp-3); }
+        .lesson-body p  { margin-bottom: var(--sp-4); }
+        .lesson-body ul { padding-left: var(--sp-6); margin-bottom: var(--sp-4); }
+        .lesson-body ul li { margin-bottom: var(--sp-2); list-style: disc; }
+        .lesson-body strong { font-weight: 700; color: var(--clr-text); }
+        .lesson-nav-item { cursor: pointer; padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-secondary); transition: all 0.15s; display: flex; align-items: center; gap: var(--sp-2); }
+        .lesson-nav-item:hover { background: var(--clr-bg); color: var(--clr-text); }
+        .lesson-nav-item.active { background: var(--clr-primary-light); color: var(--clr-primary); font-weight: 700; }
+        .lesson-nav-item.completed::before { content: '✓'; color: var(--clr-success); font-weight: 800; font-size: 0.75rem; }
+    </style>
+</head>
+<body class="film-grain" data-page="lesson">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+
+        <!-- Reading Progress Bar -->
+        <div class="scroll-progress-bar" id="read-progress"></div>
+
+        <div class="page-content animate-fade-in" style="max-width:1200px;margin:0 auto;">
+
+            <!-- Breadcrumb + Pace Switcher -->
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-4);margin-bottom:var(--sp-6);">
+                <div>
+                    <div style="font-size:0.8125rem;color:var(--clr-text-muted);margin-bottom:4px;">
+                        <a href="/student/courses.html" style="color:var(--clr-primary);">Courses</a>
+                        <span style="margin:0 6px;">›</span>
+                        <span id="breadcrumb-course">Loading...</span>
+                        <span style="margin:0 6px;">›</span>
+                        <span id="breadcrumb-lesson">Lesson</span>
+                    </div>
+                    <h1 class="page-title" id="lesson-title">Loading lesson...</h1>
+                </div>
+                <div class="pace-switcher" id="pace-switcher">
+                    <button class="pace-tab active" data-pace="standard">📖 Standard</button>
+                    <button class="pace-tab" data-pace="express">⚡ Express</button>
+                    <button class="pace-tab" data-pace="deep">🔬 Deep Dive</button>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 280px;gap:var(--sp-6);">
+                <!-- Main Lesson Content -->
+                <div>
+                    <div class="card-flat" id="lesson-content-card">
+                        <div id="lesson-content-standard" class="lesson-body">
+                            <div class="animate-shimmer" style="height:24px;border-radius:8px;margin-bottom:16px;"></div>
+                            <div class="animate-shimmer" style="height:16px;border-radius:8px;margin-bottom:8px;"></div>
+                            <div class="animate-shimmer" style="height:16px;border-radius:8px;margin-bottom:8px;width:80%;"></div>
+                            <div class="animate-shimmer" style="height:16px;border-radius:8px;width:60%;"></div>
+                        </div>
+                        <div id="lesson-content-express" class="lesson-body" style="display:none;"></div>
+                        <div id="lesson-content-deep"   class="lesson-body" style="display:none;"></div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:var(--sp-6);gap:var(--sp-4);">
+                        <button class="btn btn-outline" id="prev-lesson-btn" onclick="goLesson('prev')" style="display:none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            Previous
+                        </button>
+                        <div style="flex:1;"></div>
+                        <button class="btn btn-success" id="complete-btn" onclick="completeLesson()">
+                            ✅ Mark Complete &amp; Continue
+                        </button>
+                        <button class="btn btn-primary" id="next-lesson-btn" onclick="goLesson('next')" style="display:none;">
+                            Next Lesson
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lesson Sidebar -->
+                <div style="position:sticky;top:calc(var(--topbar-height) + var(--sp-6));align-self:start;">
+                    <div class="card-flat">
+                        <h4 style="font-size:0.875rem;font-weight:700;margin-bottom:var(--sp-3);">Course Lessons</h4>
+                        <div id="lesson-nav-list" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto;" class="scrollbar-hide">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    <div style="margin-top:var(--sp-4);padding:var(--sp-4);background:var(--clr-primary-light);border-radius:var(--radius-lg);">
+                        <div style="font-size:0.75rem;font-weight:700;color:var(--clr-primary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Progress</div>
+                        <div id="lesson-progress-text" class="font-mono-data" style="font-size:0.875rem;font-weight:600;">— / — lessons</div>
+                        <div class="progress-bar" style="margin-top:var(--sp-2);"><div class="progress-bar-fill" id="lesson-progress-bar" style="width:0%;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- XP Toast -->
+<div id="xp-toast" style="position:fixed;bottom:var(--sp-6);right:var(--sp-6);background:var(--clr-success);color:#FFF;padding:var(--sp-3) var(--sp-5);border-radius:var(--radius-pill);font-weight:700;box-shadow:var(--shadow-lg);transform:translateY(100px);opacity:0;transition:all 0.4s var(--ease-spring);z-index:9999;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+let lessonId  = params.get('lesson_id');
+let courseId  = params.get('course_id');
+let lessonData = null;
+let currentPace = localStorage.getItem('alms-pace') || 'standard';
+let completedId = null;
+
+// Scroll progress
+window.addEventListener('scroll', () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    if (h > 0) document.getElementById('read-progress').style.width = `${(window.scrollY / h) * 100}%`;
+}, { passive: true });
+
+// Pace switcher
+document.querySelectorAll('.pace-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.pace === currentPace);
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.pace-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        currentPace = this.dataset.pace;
+        localStorage.setItem('alms-pace', currentPace);
+        showPaceContent(currentPace);
+        // Save pace to server
+        fetch('/api/lesson-pace.php', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ pace: currentPace, csrf_token: window.ALMS?.csrfToken||'' }) }).catch(()=>{});
+    });
+});
+
+function showPaceContent(pace) {
+    ['standard','express','deep'].forEach(p => {
+        document.getElementById(`lesson-content-${p}`).style.display = p === pace ? 'block' : 'none';
+    });
+}
+
+function renderMarkdown(text) {
+    if (!text) return '<p class="text-muted">No content for this pace level.</p>';
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .split('\n\n').map(p => p.startsWith('<') ? p : `<p>${p}</p>`).join('');
+}
+
+document.addEventListener('alms:session-ready', async function() {
+    const url = lessonId ? `/api/student-lesson.php?lesson_id=${lessonId}` : `/api/student-lesson.php?course_id=${courseId}`;
+    try {
+        const res = await fetch(url, { credentials: 'include' });
+        lessonData = await res.json();
+    } catch(e) { return; }
+
+    if (!lessonData.success || !lessonData.lesson) {
+        document.getElementById('lesson-title').textContent = 'Lesson not found';
+        return;
+    }
+
+    const L = lessonData.lesson;
+    lessonId = L.id;
+    completedId = lessonData.progress?.completed_this_lesson ? L.id : null;
+
+    // Breadcrumb + title
+    document.getElementById('breadcrumb-course').textContent = L.course_name || 'Course';
+    document.getElementById('breadcrumb-lesson').textContent = `Lesson ${L.sequence_order || ''}`;
+    document.getElementById('lesson-title').textContent = L.title;
+    document.title = `${L.title} — ALMS`;
+
+    // Content
+    document.getElementById('lesson-content-standard').innerHTML = renderMarkdown(L.content_standard);
+    document.getElementById('lesson-content-express').innerHTML  = renderMarkdown(L.content_express);
+    document.getElementById('lesson-content-deep').innerHTML     = renderMarkdown(L.content_deep);
+    showPaceContent(currentPace);
+
+    // Navigation buttons
+    if (lessonData.prev_lesson_id) document.getElementById('prev-lesson-btn').style.display = 'inline-flex';
+    if (lessonData.next_lesson_id) document.getElementById('next-lesson-btn').style.display = 'inline-flex';
+    if (completedId) {
+        document.getElementById('complete-btn').textContent = '✅ Completed';
+        document.getElementById('complete-btn').className = 'btn btn-ghost';
+    }
+
+    // Lesson list
+    const prog = lessonData.progress || {};
+    document.getElementById('lesson-progress-text').textContent = `${prog.completed || 0} / ${prog.total || 0} lessons`;
+    gsap.to('#lesson-progress-bar', { width: prog.total > 0 ? `${Math.round((prog.completed/prog.total)*100)}%` : '0%', duration: 0.8 });
+
+    if (lessonData.lesson_list) {
+        document.getElementById('lesson-nav-list').innerHTML = lessonData.lesson_list.map(l => `
+            <div class="lesson-nav-item ${l.id == lessonId ? 'active' : ''} ${l.completed ? 'completed' : ''}"
+                 onclick="window.location.href='/student/lesson.html?lesson_id=${l.id}'">
+                <span style="font-family:var(--font-mono);font-size:0.6875rem;color:var(--clr-text-muted);min-width:20px;">${l.sequence_order}</span>
+                ${escHtml(l.title)}
+            </div>`).join('');
+    }
+});
+
+async function completeLesson() {
+    if (!lessonId) return;
+    const btn = document.getElementById('complete-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    try {
+        const res = await fetch('/api/lesson-progress.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lesson_id: lessonId, csrf_token: window.ALMS?.csrfToken || '' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showXpToast(`+${data.xp_awarded || 10} XP earned! 🎉`);
+            btn.textContent = '✅ Completed';
+            btn.className = 'btn btn-ghost';
+            btn.disabled = false;
+            if (lessonData?.next_lesson_id) {
+                setTimeout(() => { window.location.href = `/student/lesson.html?lesson_id=${lessonData.next_lesson_id}`; }, 1800);
+            }
+        }
+    } catch(e) { btn.disabled = false; btn.textContent = '✅ Mark Complete & Continue'; }
+}
+
+function goLesson(dir) {
+    const id = dir === 'next' ? lessonData?.next_lesson_id : lessonData?.prev_lesson_id;
+    if (id) window.location.href = `/student/lesson.html?lesson_id=${id}`;
+}
+
+function showXpToast(msg) {
+    const toast = document.getElementById('xp-toast');
+    toast.textContent = msg;
+    toast.style.transform = 'translateY(0)';
+    toast.style.opacity = '1';
+    setTimeout(() => { toast.style.transform = 'translateY(100px)'; toast.style.opacity = '0'; }, 3000);
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

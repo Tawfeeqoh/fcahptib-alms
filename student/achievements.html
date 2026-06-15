@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievements — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .badge-card { background: var(--clr-surface); border-radius: var(--radius-2xl); padding: var(--sp-5); border: 1px solid var(--clr-border-light); text-align: center; transition: all 0.25s var(--ease-out); }
+        .badge-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .badge-card.locked { opacity: 0.4; filter: grayscale(0.6); }
+        .badge-icon { font-size: 2.5rem; margin-bottom: var(--sp-3); }
+        .xp-transaction { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-3); border-radius: var(--radius-md); margin-bottom: var(--sp-2); font-size: 0.875rem; }
+        .xp-transaction:nth-child(odd) { background: var(--clr-bg); }
+    </style>
+</head>
+<body class="film-grain" data-page="achievements">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">🏆 Achievements</h1>
+                <p class="page-subtitle">Your learning milestones and XP history</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row" style="margin-bottom:var(--sp-6);">
+                <div class="stat-card reveal-element">
+                    <div class="stat-card-icon red"><span style="font-size:1.5rem;">⭐</span></div>
+                    <div><div class="stat-card-value font-mono-data" id="stat-xp">0</div><div class="stat-card-label">Total XP</div></div>
+                </div>
+                <div class="stat-card reveal-element">
+                    <div class="stat-card-icon blue"><span style="font-size:1.5rem;">🛡</span></div>
+                    <div><div class="stat-card-value font-mono-data" id="stat-level">1</div><div class="stat-card-label">Current Level</div></div>
+                </div>
+                <div class="stat-card reveal-element">
+                    <div class="stat-card-icon green"><span style="font-size:1.5rem;">🔥</span></div>
+                    <div><div class="stat-card-value font-mono-data" id="stat-streak">0</div><div class="stat-card-label">Current Streak</div></div>
+                </div>
+                <div class="stat-card reveal-element">
+                    <div class="stat-card-icon amber"><span style="font-size:1.5rem;">🏅</span></div>
+                    <div><div class="stat-card-value font-mono-data" id="stat-longest">0</div><div class="stat-card-label">Longest Streak</div></div>
+                </div>
+            </div>
+
+            <!-- XP Level Progress -->
+            <div class="dashboard-widget reveal-element" style="margin-bottom:var(--sp-6);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);">
+                    <h3 style="font-size:1rem;font-weight:700;">Level Progress</h3>
+                    <span id="level-xp-label" class="font-mono-data text-sm text-muted"></span>
+                </div>
+                <div class="progress-bar" style="height:12px;"><div class="progress-bar-fill" id="level-progress" style="width:0%;"></div></div>
+                <p class="text-muted text-sm" style="margin-top:var(--sp-2);" id="level-next-msg"></p>
+            </div>
+
+            <!-- Badges Grid -->
+            <div class="dashboard-widget reveal-element" style="margin-bottom:var(--sp-6);">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-5);">Badge Collection</h3>
+                <div id="badges-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--sp-4);">
+                    <div class="animate-shimmer" style="height:130px;border-radius:var(--radius-2xl);"></div>
+                    <div class="animate-shimmer" style="height:130px;border-radius:var(--radius-2xl);"></div>
+                    <div class="animate-shimmer" style="height:130px;border-radius:var(--radius-2xl);"></div>
+                </div>
+            </div>
+
+            <!-- XP History -->
+            <div class="dashboard-widget reveal-element">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">XP History</h3>
+                <div id="xp-history"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const ALL_BADGES = [
+    { code: 'first_login',       name: 'First Steps',         icon: '🎯', desc: 'Logged in for the first time' },
+    { code: 'quiz_master',       name: 'Quiz Master',         icon: '🏆', desc: 'Scored 100% on a quiz' },
+    { code: 'consistency_king',  name: 'Consistency King',    icon: '👑', desc: 'Maintained a 7-day streak' },
+    { code: 'fast_learner',      name: 'Fast Learner',        icon: '⚡', desc: 'Completed a course in express pace' },
+    { code: 'assignment_champ',  name: 'Assignment Champion', icon: '📋', desc: 'Submitted 5 assignments on time' },
+    { code: 'wellness_warrior',  name: 'Wellness Warrior',    icon: '💙', desc: 'Logged wellness for 5 consecutive days' },
+    { code: 'deep_diver',        name: 'Deep Diver',          icon: '🔬', desc: 'Completed 3 lessons in Deep Dive mode' },
+    { code: 'level_5',           name: 'Rising Star',         icon: '🌟', desc: 'Reached Level 5' },
+];
+
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/student-achievements.php', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success) return;
+
+        const g = data.gamification || {};
+        const earnedBadges = (data.badges || []).map(b => b.code);
+        const xpHistory = data.xp_transactions || [];
+
+        document.getElementById('stat-xp').textContent = (g.total_xp || 0).toLocaleString();
+        document.getElementById('stat-level').textContent = g.level || 1;
+        document.getElementById('stat-streak').textContent = g.current_streak || 0;
+        document.getElementById('stat-longest').textContent = g.longest_streak || 0;
+
+        // Level progress
+        const level = g.level || 1;
+        const xp = g.total_xp || 0;
+        const threshold = level * 500;
+        const prevThreshold = (level - 1) * 500;
+        const pct = Math.min(100, Math.round(((xp - prevThreshold) / (threshold - prevThreshold)) * 100));
+        document.getElementById('level-xp-label').textContent = `${xp} / ${threshold} XP`;
+        document.getElementById('level-next-msg').textContent = `${threshold - xp} XP to reach Level ${level + 1}`;
+        gsap.to('#level-progress', { width: pct + '%', duration: 1.2, ease: 'power2.out' });
+
+        // Badges
+        document.getElementById('badges-grid').innerHTML = ALL_BADGES.map(b => {
+            const earned = earnedBadges.includes(b.code);
+            const earnedData = data.badges?.find(bd => bd.code === b.code);
+            return `
+            <div class="badge-card ${earned ? '' : 'locked'}">
+                <div class="badge-icon">${b.icon}</div>
+                <div style="font-size:0.875rem;font-weight:700;">${b.name}</div>
+                <div style="font-size:0.75rem;color:var(--clr-text-muted);margin-top:4px;">${b.desc}</div>
+                ${earned && earnedData?.earned_at ? `<div style="font-size:0.625rem;font-family:var(--font-mono);color:var(--clr-success);margin-top:var(--sp-2);">Earned ${new Intl.DateTimeFormat('en-NG',{dateStyle:'short'}).format(new Date(earnedData.earned_at))}</div>` : ''}
+                ${!earned ? '<div style="font-size:0.75rem;color:var(--clr-text-muted);margin-top:4px;">🔒 Locked</div>' : ''}
+            </div>`;
+        }).join('');
+
+        // XP History
+        document.getElementById('xp-history').innerHTML = xpHistory.length
+            ? xpHistory.slice(0,20).map(t => `
+                <div class="xp-transaction">
+                    <div>
+                        <div style="font-weight:600;">${escHtml(t.description||t.source_type)}</div>
+                        <div style="font-size:0.75rem;color:var(--clr-text-muted);" data-date="${t.created_at}" data-date-style="datetime">${t.created_at}</div>
+                    </div>
+                    <span class="badge ${t.points>0?'badge-green':'badge-red'}">+${t.points} XP</span>
+                </div>`).join('')
+            : '<p class="text-muted text-sm">No XP history yet. Complete lessons and quizzes to earn XP!</p>';
+
+    } catch(e) {}
+});
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

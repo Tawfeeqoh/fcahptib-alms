@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Builder — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="quiz-builder">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in" style="max-width:820px;">
+            <div class="page-header">
+                <h1 class="page-title">Quiz Builder</h1>
+                <p class="page-subtitle">Create MCQ assessments for the rule-based adaptive engine.</p>
+            </div>
+            
+            <div id="flash-container"></div>
+
+            <div class="dashboard-widget">
+                <form id="quiz-form" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div class="input-group">
+                        <label for="course-id">Course</label>
+                        <select class="input-field" id="course-id" name="course_id" required>
+                            <option value="">Select course</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="title">Quiz Title</label>
+                        <input class="input-field" id="title" name="title" required placeholder="e.g. Intro to Hardware Test">
+                    </div>
+                    <div class="input-group" style="grid-column:1/-1;">
+                        <label for="question-text">Question</label>
+                        <textarea class="input-field" id="question-text" name="question_text" required placeholder="Type the question text here..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="option-a">Option A</label>
+                        <input class="input-field" id="option-a" name="option_a" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="option-b">Option B</label>
+                        <input class="input-field" id="option-b" name="option_b" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="option-c">Option C</label>
+                        <input class="input-field" id="option-c" name="option_c" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="option-d">Option D</label>
+                        <input class="input-field" id="option-d" name="option_d" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="correct-option">Correct Option</label>
+                        <select class="input-field" id="correct-option" name="correct_option">
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div style="grid-column:1/-1; display:flex; justify-content:flex-end;">
+                        <button class="btn btn-primary" type="submit" id="submit-btn">Publish Quiz</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/lecturer-quiz-builder.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    const select = document.getElementById('course-id');
+    const courses = data.courses || [];
+    select.innerHTML = '<option value="">Select course</option>' + courses.map(course => `
+        <option value="${course.id}">${escHtml(course.course_code)} - ${escHtml(course.course_name)}</option>
+    `).join('');
+});
+
+document.getElementById('quiz-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const flash = document.getElementById('flash-container');
+    
+    const body = {
+        course_id: document.getElementById('course-id').value,
+        title: document.getElementById('title').value,
+        question_text: document.getElementById('question-text').value,
+        option_a: document.getElementById('option-a').value,
+        option_b: document.getElementById('option-b').value,
+        option_c: document.getElementById('option-c').value,
+        option_d: document.getElementById('option-d').value,
+        correct_option: document.getElementById('correct-option').value
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Publishing...';
+    flash.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/lecturer-quiz-builder.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            credentials: 'include',
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+            flash.innerHTML = `<div class="flash-msg success"><span>${escHtml(data.message)}</span></div>`;
+            document.getElementById('title').value = '';
+            document.getElementById('question-text').value = '';
+            document.getElementById('option-a').value = '';
+            document.getElementById('option-b').value = '';
+            document.getElementById('option-c').value = '';
+            document.getElementById('option-d').value = '';
+            document.getElementById('correct-option').value = 'A';
+        } else {
+            flash.innerHTML = `<div class="flash-msg error"><span>${escHtml(data.message)}</span></div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = '<div class="flash-msg error"><span>Network error. Please try again.</span></div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Publish Quiz';
+        initFlashMessages();
+    }
+});
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

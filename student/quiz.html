@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizzes Portal — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .quiz-question-slide {
+            display: none;
+        }
+        .quiz-question-slide.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="film-grain" data-page="quizzes">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            
+            <!-- ── QUIZ LISTINGS INDEX ── -->
+            <div id="quiz-listings-view">
+                <div style="margin-bottom: var(--sp-6);">
+                    <h2 style="font-size: 1.5rem; font-weight:700;">Curriculum Quizzes</h2>
+                    <p class="text-secondary text-sm">Attempt interactive assessments created by lecturers to test understanding.</p>
+                </div>
+                <div id="quizzes-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+                    <div class="animate-shimmer" style="height:160px;border-radius:var(--radius-xl);"></div>
+                    <div class="animate-shimmer" style="height:160px;border-radius:var(--radius-xl);"></div>
+                </div>
+            </div>
+
+            <!-- ── QUIZ MCQ ACTIVE ATTEMPT PLAYER ── -->
+            <div id="quiz-player-view" style="display:none;">
+                <div style="margin-bottom:var(--sp-4);">
+                    <a href="/student/quiz.html" style="font-size:0.8125rem; font-weight:600; text-decoration:none; color:var(--clr-primary);">&larr; Exit Quiz</a>
+                    <h2 id="player-quiz-title" style="font-size: 1.5rem; font-weight:700; margin-top:4px;">Quiz Title</h2>
+                    <p class="text-secondary text-sm" id="player-quiz-subtitle">Course &middot; Choose correct options sequentially.</p>
+                </div>
+
+                <div class="card-flat" id="quiz-player-card" style="max-width:680px; margin:0 auto; padding:var(--sp-8); background:var(--clr-surface); border:1px solid var(--clr-border-light);">
+                    <!-- Progress bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-6);">
+                        <span class="text-xs text-muted uppercase font-bold" id="quiz-question-counter">Question 1 of 1</span>
+                        <div style="width:160px; height:8px; background:var(--clr-bg); border-radius:4px; overflow:hidden;">
+                            <div id="quiz-progress-fill" style="width: 0%; height:100%; background:var(--clr-primary); transition:width 0.4s ease;"></div>
+                        </div>
+                    </div>
+
+                    <div id="questions-wrapper">
+                        <!-- Questions injected by JS -->
+                    </div>
+
+                    <!-- Navigation -->
+                    <div style="display:flex; justify-content:space-between; margin-top:40px; border-top:1px solid var(--clr-border-light); padding-top:20px;">
+                        <button class="btn btn-outline btn-sm" id="quiz-prev-btn" onclick="prevQuizQuestion()" style="visibility:hidden;">Previous</button>
+                        <button class="btn btn-primary btn-sm" id="quiz-next-btn" onclick="nextQuizQuestion()">Next Question</button>
+                        <button class="btn btn-primary btn-sm animate-pulse-glow" id="quiz-submit-btn" style="display:none;">Submit Responses</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── QUIZ RESULTS REPORT CARD ── -->
+            <div class="card-flat text-center" id="quiz-results-card" style="display:none; max-width:500px; margin:40px auto 0; padding:var(--sp-8); background:var(--clr-surface); border:1px solid var(--clr-border-light);">
+                <div style="font-size:4rem; margin-bottom:var(--sp-4);" id="result-emoji">🎉</div>
+                <h3 style="font-size:1.5rem; font-weight:800;" id="result-title">Quiz Completed</h3>
+                <div style="font-size:2.5rem; font-weight:800; color:var(--clr-primary); margin: 20px 0;" class="font-mono-data" id="result-percentage">80%</div>
+                <p class="text-secondary" style="line-height:1.6; margin-bottom:var(--sp-6);" id="result-feedback">Excellent job!</p>
+                <a href="/student/quiz.html" class="btn btn-outline">Close Portal</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let currentQuestionIndex = 0;
+let totalQuestions = 0;
+let quizQuestions = [];
+let activeQuizId = 0;
+
+document.addEventListener('alms:session-ready', async function() {
+    const params = new URLSearchParams(window.location.search);
+    activeQuizId = parseInt(params.get('quiz_id') || '0');
+
+    if (activeQuizId > 0) {
+        document.getElementById('quiz-listings-view').style.display = 'none';
+        document.getElementById('quiz-player-view').style.display = 'block';
+        await loadQuizPlayer(activeQuizId);
+    } else {
+        document.getElementById('quiz-listings-view').style.display = 'block';
+        document.getElementById('quiz-player-view').style.display = 'none';
+        await loadQuizListings();
+    }
+});
+
+async function loadQuizListings() {
+    const grid = document.getElementById('quizzes-grid');
+    let data;
+    try {
+        const res = await fetch('/api/student-quizzes.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(e) { return; }
+    if (!data.success) {
+        grid.innerHTML = '<p class="text-muted">Error loading quizzes.</p>';
+        return;
+    }
+    const quizzes = data.quizzes || [];
+    if (quizzes.length === 0) {
+        grid.outerHTML = `
+            <div class="empty-state card-flat">
+                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-title">No Quizzes Active</div>
+                <p class="empty-state-desc">Your department has no active tests published for this curriculum path yet.</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = quizzes.map(q => {
+        const attempted = q.attempt_score !== null;
+        return `
+            <div class="card-flat reveal-element depth-lift" style="border: 1px solid var(--clr-border-light); background: var(--clr-surface); display:flex; flex-direction:column; justify-content:space-between; gap:16px;">
+                <div>
+                    <span class="badge badge-neutral" style="margin-bottom:4px;">${escHtml(q.course_code)}</span>
+                    <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:8px;">${escHtml(q.title)}</h3>
+                    <p class="text-secondary" style="font-size:0.8125rem; margin:0; line-height:1.5;">${escHtml(q.description)}</p>
+                </div>
+
+                <div style="border-top:1px solid var(--clr-border-light); padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:0.8125rem;">
+                    <div>
+                        ${attempted ? `
+                            <span class="badge badge-green" style="font-weight:700;">Score: ${q.attempt_score} pts (${Math.round(q.attempt_pct)}%)</span>
+                        ` : `
+                            <span class="text-muted">${q.max_points} max points</span>
+                        `}
+                    </div>
+                    <a href="/student/quiz.html?quiz_id=${q.id}" class="btn btn-primary btn-sm" style="border-radius:12px; padding: 6px 12px;">
+                        ${attempted ? 'Retake Quiz' : 'Start Quiz'}
+                    </a>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+}
+
+async function loadQuizPlayer(quizId) {
+    let data;
+    try {
+        const res = await fetch(`/api/student-quizzes.php?quiz_id=${quizId}`, { credentials: 'include' });
+        data = await res.json();
+    } catch(e) { return; }
+    if (!data.success) {
+        document.getElementById('quiz-player-card').innerHTML = `<p class="text-muted">${escHtml(data.message || 'Error loading quiz details.')}</p>`;
+        return;
+    }
+
+    const quiz = data.quiz || {};
+    quizQuestions = data.questions || [];
+    totalQuestions = quizQuestions.length;
+
+    document.getElementById('player-quiz-title').textContent = quiz.title;
+    document.getElementById('player-quiz-subtitle').textContent = `${quiz.course_code} · ${quiz.course_name}`;
+
+    const wrapper = document.getElementById('questions-wrapper');
+    if (totalQuestions === 0) {
+        wrapper.innerHTML = '<p class="text-muted">No questions found in this quiz.</p>';
+        return;
+    }
+
+    wrapper.innerHTML = quizQuestions.map((q, idx) => `
+        <div class="quiz-question-slide ${idx === 0 ? 'active' : ''}" id="q-slide-${idx}">
+            <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:var(--sp-6); line-height:1.4;">
+                ${escHtml(q.question_text)}
+            </h3>
+            
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <label class="quiz-option" onclick="selectMcqOption(${idx}, 'A')">
+                    <input type="radio" name="answers[${q.id}]" value="A" style="display:none;">
+                    <div class="quiz-option-marker">A</div>
+                    <span>${escHtml(q.option_a)}</span>
+                </label>
+                
+                <label class="quiz-option" onclick="selectMcqOption(${idx}, 'B')">
+                    <input type="radio" name="answers[${q.id}]" value="B" style="display:none;">
+                    <div class="quiz-option-marker">B</div>
+                    <span>${escHtml(q.option_b)}</span>
+                </label>
+                
+                <label class="quiz-option" onclick="selectMcqOption(${idx}, 'C')">
+                    <input type="radio" name="answers[${q.id}]" value="C" style="display:none;">
+                    <div class="quiz-option-marker">C</div>
+                    <span>${escHtml(q.option_c)}</span>
+                </label>
+                
+                <label class="quiz-option" onclick="selectMcqOption(${idx}, 'D')">
+                    <input type="radio" name="answers[${q.id}]" value="D" style="display:none;">
+                    <div class="quiz-option-marker">D</div>
+                    <span>${escHtml(q.option_d)}</span>
+                </label>
+            </div>
+        </div>
+    `).join('');
+
+    currentQuestionIndex = 0;
+    updateQuizControls();
+
+    // Wire submit button
+    document.getElementById('quiz-submit-btn').onclick = () => submitQuizAnswers(quizId);
+}
+
+function selectMcqOption(slideIndex, val) {
+    const slide = document.getElementById('q-slide-' + slideIndex);
+    const options = slide.querySelectorAll('.quiz-option');
+    options.forEach(opt => opt.classList.remove('selected'));
+    
+    const optLabel = Array.from(options).find(opt => opt.querySelector('input').value === val);
+    if (optLabel) {
+        optLabel.classList.add('selected');
+        optLabel.querySelector('input').checked = true;
+    }
+}
+
+function prevQuizQuestion() {
+    if (currentQuestionIndex > 0) {
+        document.getElementById('q-slide-' + currentQuestionIndex).classList.remove('active');
+        currentQuestionIndex--;
+        document.getElementById('q-slide-' + currentQuestionIndex).classList.add('active');
+        updateQuizControls();
+    }
+}
+
+function nextQuizQuestion() {
+    const activeSlide = document.getElementById('q-slide-' + currentQuestionIndex);
+    const checked = activeSlide.querySelector('input[type="radio"]:checked');
+    if (!checked) {
+        alert('Please choose an answer option first.');
+        return;
+    }
+
+    if (currentQuestionIndex < totalQuestions - 1) {
+        document.getElementById('q-slide-' + currentQuestionIndex).classList.remove('active');
+        currentQuestionIndex++;
+        document.getElementById('q-slide-' + currentQuestionIndex).classList.add('active');
+        updateQuizControls();
+    }
+}
+
+function updateQuizControls() {
+    document.getElementById('quiz-question-counter').textContent = `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
+    document.getElementById('quiz-progress-fill').style.width = `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`;
+
+    if (currentQuestionIndex === 0) {
+        document.getElementById('quiz-prev-btn').style.visibility = 'hidden';
+    } else {
+        document.getElementById('quiz-prev-btn').style.visibility = 'visible';
+    }
+
+    if (currentQuestionIndex === totalQuestions - 1) {
+        document.getElementById('quiz-next-btn').style.display = 'none';
+        document.getElementById('quiz-submit-btn').style.display = 'inline-flex';
+    } else {
+        document.getElementById('quiz-next-btn').style.display = 'inline-flex';
+        document.getElementById('quiz-submit-btn').style.display = 'none';
+    }
+}
+
+async function submitQuizAnswers(quizId) {
+    const activeSlide = document.getElementById('q-slide-' + currentQuestionIndex);
+    const checked = activeSlide.querySelector('input[type="radio"]:checked');
+    if (!checked) {
+        alert('Please choose an answer option first.');
+        return;
+    }
+
+    const answers = [];
+    document.querySelectorAll('.quiz-question-slide').forEach(slide => {
+        const input = slide.querySelector('input[type="radio"]:checked');
+        if (input) {
+            const qid = parseInt(input.name.match(/\d+/)[0]);
+            answers.push({
+                question_id: qid,
+                selected_option: input.value
+            });
+        }
+    });
+
+    const submitBtn = document.getElementById('quiz-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Scoring quiz...';
+
+    try {
+        const res = await fetch("/api/quiz-submit.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": window.ALMS?.csrfToken || ""
+            },
+            body: JSON.stringify({
+                quiz_id: quizId,
+                answers: answers
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('quiz-player-view').style.display = 'none';
+            
+            const resultsCard = document.getElementById('quiz-results-card');
+            document.getElementById('result-percentage').textContent = `${Math.round(data.percentage)}%`;
+            document.getElementById('result-feedback').textContent = data.feedback;
+            
+            if (data.passed) {
+                document.getElementById('result-emoji').textContent = '🎉';
+                document.getElementById('result-title').textContent = 'Quiz Completed Successfully';
+            } else {
+                document.getElementById('result-emoji').textContent = '📚';
+                document.getElementById('result-title').textContent = 'Keep Practicing!';
+            }
+            resultsCard.style.display = 'block';
+        } else {
+            alert('Error submitting responses: ' + data.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Responses';
+        }
+    } catch(err) {
+        alert('Network connection error.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Responses';
+    }
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

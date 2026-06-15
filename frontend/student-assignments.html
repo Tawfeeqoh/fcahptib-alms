@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignments - ALMS</title>
+    <meta name="description" content="Student assignment submissions and feedback in ALMS.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .assignment-card {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .assignment-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .assignment-meta span {
+            font-size: 0.9rem;
+            color: var(--clr-text-secondary);
+        }
+        .assignment-form {
+            display: grid;
+            gap: 14px;
+        }
+        .assignment-form textarea,
+        .assignment-form input[type="file"] {
+            width: 100%;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 14px 16px;
+            background: var(--clr-surface);
+            color: var(--clr-text);
+            font: inherit;
+        }
+        .assignment-status {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .status-pending { background: rgba(255, 149, 0, 0.12); color: var(--clr-warning); }
+        .status-submitted { background: rgba(52, 199, 89, 0.12); color: var(--clr-success); }
+        .status-graded { background: rgba(48, 209, 88, 0.12); color: var(--clr-success); }
+        .assignment-result {
+            background: var(--clr-bg);
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 16px;
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-assignments">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-assignments.html" class="static-brand">
+                <span>ALMS</span>
+                Assignments
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px; padding-bottom: 80px;">
+        <section class="container">
+            <div style="margin-bottom: 30px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:14px; align-items:center;">
+                <div>
+                    <p class="static-eyebrow">Assignment Desk</p>
+                    <h1 style="margin:0;">Assignments</h1>
+                    <p class="text-secondary" style="max-width:640px; margin-top:12px;">Review active assignments, submit work, and track grading status from your lecturers.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-outline">Courses</a>
+                    <a href="./student-gradebook.html" class="btn btn-outline">Gradebook</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="assignments-alert" class="static-alert" hidden></div>
+
+            <div id="assignments-container"></div>
+            <div id="assignments-empty" class="empty-state card-flat" hidden>
+                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-title">No assignments found</div>
+                <p class="empty-state-desc">Assignments will appear here once your lecturers publish them for your level.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

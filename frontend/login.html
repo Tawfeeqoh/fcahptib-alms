@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - ALMS</title>
+    <meta name="description" content="Sign in to ALMS FCAH&PT Ibadan.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+</head>
+<body class="alms-static">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./login.html" class="static-brand">
+                <span>ALMS</span>
+                FCAH&PT Ibadan
+            </a>
+            <div class="static-nav-actions">
+                <a href="./register.html" class="btn btn-outline btn-sm">Create Account</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page">
+        <section class="auth-panel" aria-labelledby="login-title">
+            <h1 id="login-title">Sign In</h1>
+            <p class="text-secondary">Access your academic command center.</p>
+            <div id="login-alert" class="static-alert" hidden></div>
+            <form id="login-form" class="static-form">
+                <div class="input-group">
+                    <label for="login-email">Email</label>
+                    <input class="input-field" id="login-email" name="email" type="email" autocomplete="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <input class="input-field" id="login-password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary btn-full" type="submit">Sign In</button>
+            </form>
+            <div class="static-auth-links">
+                <a href="./forgot-password.html">Forgot password?</a>
+                <a href="./register.html">Create an account</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

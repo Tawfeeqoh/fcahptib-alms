@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="dashboard">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            
+            <!-- Pending approvals alert banner -->
+            <div class="flash-msg warning" id="pending-alert" style="display:none; margin-bottom: var(--sp-6);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>There are <strong id="pending-count">0</strong> lecturers awaiting administrative credentials verification. <a href="/admin/lecturers.html" style="text-decoration: underline; margin-left: 8px; color:inherit;">Review approvals &rarr;</a></span>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row stats-row-5 mb-6">
+                <div class="stat-card">
+                    <div class="stat-card-icon blue">🎓</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-students">—</div>
+                        <div class="stat-card-label">Students</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-icon red">🔬</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-lecturers">—</div>
+                        <div class="stat-card-label">Lecturers</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon amber">⏳</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-pending">—</div>
+                        <div class="stat-card-label">Pending Approval</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon green">📚</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-courses">—</div>
+                        <div class="stat-card-label">Courses Register</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon blue">🏛️</div>
+                    <div>
+                        <div class="stat-card-value font-mono-data" id="stat-departments">—</div>
+                        <div class="stat-card-label">Departments</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2/3 and 1/3 Content Grid -->
+            <div class="content-grid">
+                
+                <!-- Left Panel: Recent Audit Logs -->
+                <div class="dashboard-widget" style="overflow-x: auto;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: var(--sp-4);">Security Activity Logs</h3>
+                    <div id="logs-container">
+                        <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Departments Summary -->
+                <div class="dashboard-widget">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: var(--sp-4);">Departments Overview</h3>
+                    <div id="departments-container" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/admin-dashboard.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    const stats = data.stats || {};
+    const activities = data.activities || [];
+    const depts = data.departments_overview || [];
+
+    // Alert
+    if (stats.pending_lecturers > 0) {
+        document.getElementById('pending-count').textContent = stats.pending_lecturers;
+        document.getElementById('pending-alert').style.display = 'flex';
+    } else {
+        document.getElementById('pending-alert').style.display = 'none';
+    }
+
+    // Stats
+    document.getElementById('stat-students').textContent = stats.students || 0;
+    document.getElementById('stat-lecturers').textContent = stats.lecturers || 0;
+    document.getElementById('stat-pending').textContent = stats.pending_lecturers || 0;
+    document.getElementById('stat-courses').textContent = stats.courses || 0;
+    document.getElementById('stat-departments').textContent = stats.departments || 0;
+
+    // Logs table
+    const logsCont = document.getElementById('logs-container');
+    if (activities.length === 0) {
+        logsCont.innerHTML = `<p class="text-muted text-sm">No activity recorded yet.</p>`;
+    } else {
+        logsCont.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>IP Address</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${activities.map(act => `
+                        <tr>
+                            <td><strong>${escHtml(act.first_name)} ${escHtml(act.last_name)}</strong></td>
+                            <td><span class="badge badge-neutral">${escHtml(act.role.toUpperCase())}</span></td>
+                            <td><span class="font-mono-data">${escHtml(act.action)}</span></td>
+                            <td class="font-mono-data text-muted">${escHtml(act.ip_address)}</td>
+                            <td class="font-mono-data text-muted" data-date="${escHtml(act.timestamp)}" data-date-style="datetime"></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Departments Overview
+    const deptsCont = document.getElementById('departments-container');
+    if (depts.length === 0) {
+        deptsCont.innerHTML = `<p class="text-muted text-sm">No departments available.</p>`;
+    } else {
+        deptsCont.innerHTML = depts.map(dept => `
+            <div class="reveal-element" style="padding: 12px; border-radius: 12px; border: 1px solid var(--clr-border-light); background: var(--clr-bg); display: flex; flex-direction: column; gap: 4px;">
+                <div style="font-weight: 700; font-size: 0.875rem; color: var(--clr-text);">${escHtml(dept.name)}</div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--clr-text-secondary);">
+                    <span>${escHtml(dept.level_offered)}</span>
+                    <span>👨‍🏫 ${dept.lecturer_count} &middot; 🎓 ${dept.student_count}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+});
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

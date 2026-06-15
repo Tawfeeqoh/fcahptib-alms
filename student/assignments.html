@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignments — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .upload-zone { border: 2px dashed var(--clr-border); border-radius: var(--radius-lg); padding: var(--sp-8); text-align: center; cursor: pointer; transition: all 0.2s ease; }
+        .upload-zone:hover, .upload-zone.drag-over { border-color: var(--clr-primary); background: var(--clr-primary-light); }
+        .upload-zone input { display: none; }
+    </style>
+</head>
+<body class="film-grain" data-page="assignments">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--sp-4);">
+                <div>
+                    <h1 class="page-title">Assignments</h1>
+                    <p class="page-subtitle">Submit your coursework and view grades</p>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="filterTab('pending', this)">Pending</button>
+                <button class="tab-btn" onclick="filterTab('submitted', this)">Submitted</button>
+                <button class="tab-btn" onclick="filterTab('all', this)">All</button>
+            </div>
+
+            <div id="assignments-list" style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                <div class="animate-shimmer" style="height:100px;border-radius:var(--radius-2xl);"></div>
+                <div class="animate-shimmer" style="height:100px;border-radius:var(--radius-2xl);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submission Modal -->
+<div class="modal-overlay" id="submit-modal">
+    <div class="modal-card" style="max-width:560px;">
+        <div class="modal-header">
+            <h3 id="modal-assignment-title">Submit Assignment</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="modal-flash"></div>
+        <input type="hidden" id="modal-assignment-id">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" accept=".pdf,.doc,.docx,.zip" onchange="fileSelected(this)">
+            <div id="upload-prompt">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="var(--clr-text-muted)" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p style="margin-top:var(--sp-3);font-weight:600;">Drag & drop or click to upload</p>
+                <p class="text-muted text-sm">Accepted: PDF, DOC, DOCX, ZIP (max 25 MB)</p>
+            </div>
+            <div id="file-selected-name" style="display:none;font-weight:600;color:var(--clr-primary);"></div>
+        </div>
+        <div class="input-group" style="margin-top:var(--sp-4);">
+            <label for="submission-note">Notes (optional)</label>
+            <textarea id="submission-note" class="input-field" rows="3" placeholder="Any notes for your lecturer..."></textarea>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:var(--sp-4);" onclick="submitAssignment()" id="submit-upload-btn">
+            Submit Assignment
+        </button>
+    </div>
+</div>
+
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allAssignments = [];
+let activeTab = 'pending';
+
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/student-assignments.php', { credentials: 'include' });
+        const data = await res.json();
+        allAssignments = data.assignments || [];
+        renderList();
+    } catch(e) { document.getElementById('assignments-list').innerHTML = '<p class="text-muted">Could not load assignments.</p>'; }
+});
+
+function filterTab(tab, btn) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+}
+
+function renderList() {
+    let items = allAssignments;
+    if (activeTab === 'pending')   items = allAssignments.filter(a => !a.submission_id);
+    if (activeTab === 'submitted') items = allAssignments.filter(a => !!a.submission_id);
+
+    if (!items.length) {
+        document.getElementById('assignments-list').innerHTML = `<div class="empty-state"><div class="empty-state-icon" style="font-size:2rem;">📋</div><h3 class="empty-state-title">No ${activeTab} assignments</h3></div>`;
+        return;
+    }
+    document.getElementById('assignments-list').innerHTML = items.map(a => {
+        const due = new Date(a.due_date);
+        const dueStr = new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium' }).format(due);
+        const overdue = due < new Date() && !a.submission_id;
+        const statusBadge = a.submission_id
+            ? (a.grade ? `<span class="badge badge-blue">Graded: ${a.grade}</span>` : `<span class="badge badge-green">Submitted</span>`)
+            : (overdue ? `<span class="badge badge-red">Overdue</span>` : `<span class="badge badge-amber">Pending</span>`);
+        return `
+        <div class="card-flat reveal-element" style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-4);flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:4px;flex-wrap:wrap;">
+                    <span class="badge badge-neutral font-mono-data">${escHtml(a.course_code)}</span>
+                    ${statusBadge}
+                </div>
+                <h4 style="font-size:1rem;font-weight:700;margin-bottom:4px;">${escHtml(a.title)}</h4>
+                <p style="font-size:0.8125rem;color:var(--clr-text-muted);margin-bottom:4px;">${escHtml((a.description||'').substring(0,120))}${a.description?.length>120?'…':''}</p>
+                <p style="font-size:0.75rem;font-family:var(--font-mono);color:${overdue?'var(--clr-danger)':'var(--clr-text-muted)'};">Due: ${dueStr}</p>
+                ${a.feedback ? `<div style="margin-top:var(--sp-2);padding:var(--sp-2) var(--sp-3);background:var(--clr-info-light);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--clr-info);">💬 ${escHtml(a.feedback)}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+                ${a.submission_id
+                    ? `<a href="/uploads/submissions/${escHtml(a.file_path||'')}" class="btn btn-outline btn-sm" ${a.file_path?'':'style="opacity:0.5;pointer-events:none;"'}>📥 Download</a>`
+                    : `<button class="btn btn-primary btn-sm" onclick="openSubmitModal(${a.id}, '${escHtml(a.title).replace(/'/g,"\\'")}')">Submit</button>`
+                }
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openSubmitModal(id, title) {
+    document.getElementById('modal-assignment-id').value = id;
+    document.getElementById('modal-assignment-title').textContent = `Submit: ${title}`;
+    document.getElementById('modal-flash').innerHTML = '';
+    document.getElementById('upload-prompt').style.display = 'block';
+    document.getElementById('file-selected-name').style.display = 'none';
+    document.getElementById('submission-note').value = '';
+    document.getElementById('file-input').value = '';
+    document.getElementById('submit-modal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('submit-modal').classList.remove('active'); }
+
+function fileSelected(input) {
+    if (input.files[0]) {
+        document.getElementById('upload-prompt').style.display = 'none';
+        document.getElementById('file-selected-name').style.display = 'block';
+        document.getElementById('file-selected-name').textContent = `📎 ${input.files[0].name}`;
+    }
+}
+
+async function submitAssignment() {
+    const id = document.getElementById('modal-assignment-id').value;
+    const file = document.getElementById('file-input').files[0];
+    const note = document.getElementById('submission-note').value;
+    const flash = document.getElementById('modal-flash');
+    const btn = document.getElementById('submit-upload-btn');
+
+    if (!file) { flash.innerHTML = '<div class="flash-msg error"><span>Please select a file to upload.</span></div>'; return; }
+
+    btn.disabled = true; btn.textContent = 'Uploading...';
+    const form = new FormData();
+    form.append('assignment_id', id);
+    form.append('file', file);
+    form.append('notes', note);
+    form.append('csrf_token', window.ALMS?.csrfToken || '');
+
+    try {
+        const res = await fetch('/api/assignments/upload-submission.php', { method: 'POST', credentials: 'include', body: form });
+        const data = await res.json();
+        if (data.success) {
+            closeModal();
+            const idx = allAssignments.findIndex(a => a.id == id);
+            if (idx >= 0) { allAssignments[idx].submission_id = data.submission_id || 1; }
+            renderList();
+        } else {
+            flash.innerHTML = `<div class="flash-msg error"><span>${data.message || 'Upload failed.'}</span></div>`;
+            btn.disabled = false; btn.textContent = 'Submit Assignment';
+        }
+    } catch(e) {
+        flash.innerHTML = '<div class="flash-msg error"><span>Network error. Please try again.</span></div>';
+        btn.disabled = false; btn.textContent = 'Submit Assignment';
+    }
+}
+
+// Drag & Drop
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) { document.getElementById('file-input').files = e.dataTransfer.files; fileSelected(document.getElementById('file-input')); } });
+
+// Close modal on overlay click
+document.getElementById('submit-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

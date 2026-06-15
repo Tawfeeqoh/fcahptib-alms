@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradebook - ALMS</title>
+    <meta name="description" content="Student gradebook summary for quizzes and assignments.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .gradebook-panel {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .gradebook-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .gradebook-table th,
+        .gradebook-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--clr-border-light);
+            text-align: left;
+        }
+        .gradebook-table th {
+            color: var(--clr-text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .gradebook-empty {
+            padding: 24px;
+            border: 1px dashed var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            background: var(--clr-surface);
+            color: var(--clr-text-secondary);
+            text-align: center;
+        }
+        @media (max-width: 860px) {
+            .gradebook-panel { padding: 22px; }
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-gradebook">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-gradebook.html" class="static-brand">
+                <span>ALMS</span>
+                Gradebook
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px; padding-bottom: 80px;">
+        <section class="container">
+            <div style="margin-bottom: 30px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:14px; align-items:center;">
+                <div>
+                    <p class="static-eyebrow">Performance Overview</p>
+                    <h1 style="margin:0;">Gradebook</h1>
+                    <p class="text-secondary" style="max-width:640px; margin-top:12px;">Track quiz averages, assignment grades, and your graded submissions across courses.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-outline">Courses</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="gradebook-alert" class="static-alert" hidden></div>
+
+            <div class="gradebook-panel">
+                <h2 style="font-size:1.1rem; margin-bottom:18px;">Quiz Performance</h2>
+                <div id="gradebook-quiz-empty" class="gradebook-empty" hidden>No quiz attempts yet. Start a quiz to begin building your gradebook.</div>
+                <div id="gradebook-quiz-table" style="overflow-x:auto;"></div>
+            </div>
+
+            <div class="gradebook-panel">
+                <h2 style="font-size:1.1rem; margin-bottom:18px;">Assignment Grades</h2>
+                <div id="gradebook-assignment-empty" class="gradebook-empty" hidden>No graded assignments yet. Submit work and wait for lecturer feedback.</div>
+                <div id="gradebook-assignment-table" style="overflow-x:auto;"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

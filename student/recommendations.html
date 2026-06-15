@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendations — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+</head>
+<body class="film-grain" data-page="recommendations">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">💡 Adaptive Recommendations</h1>
+                <p class="page-subtitle">Personalized learning advice from your AI engine</p>
+            </div>
+
+            <!-- Info Box -->
+            <div style="background:var(--clr-info-light);border:1px solid rgba(0,122,255,0.2);border-radius:var(--radius-lg);padding:var(--sp-4);margin-bottom:var(--sp-6);display:flex;gap:var(--sp-3);">
+                <div style="font-size:1.5rem;">🤖</div>
+                <div>
+                    <p style="font-size:0.875rem;font-weight:600;color:var(--clr-info);margin-bottom:4px;">Powered by Adaptive Learning Engine</p>
+                    <p style="font-size:0.8125rem;color:var(--clr-text-secondary);margin-bottom:0;">These recommendations are generated based on your quiz performance, wellness state, VARK style, and learning pace. Dismiss them once actioned.</p>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="filterRecs('all', this)">All</button>
+                <button class="tab-btn" onclick="filterRecs('high', this)">🔴 High</button>
+                <button class="tab-btn" onclick="filterRecs('medium', this)">🟡 Medium</button>
+                <button class="tab-btn" onclick="filterRecs('low', this)">🟢 Low</button>
+                <button class="tab-btn" onclick="filterRecs('resolved', this)">✅ Resolved</button>
+            </div>
+
+            <div id="recs-list" style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                <div class="animate-shimmer" style="height:100px;border-radius:var(--radius-2xl);"></div>
+                <div class="animate-shimmer" style="height:100px;border-radius:var(--radius-2xl);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allRecs = [];
+let activeFilter = 'all';
+
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/student-recommendations.php', { credentials: 'include' });
+        const data = await res.json();
+        allRecs = data.recommendations || [];
+        renderRecs();
+    } catch(e) { document.getElementById('recs-list').innerHTML = '<p class="text-muted">Could not load recommendations.</p>'; }
+});
+
+function filterRecs(filter, btn) {
+    activeFilter = filter;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRecs();
+}
+
+function renderRecs() {
+    let items = allRecs;
+    if (activeFilter === 'resolved') items = allRecs.filter(r => r.is_resolved);
+    else if (activeFilter !== 'all') items = allRecs.filter(r => r.priority === activeFilter && !r.is_resolved);
+    else items = allRecs.filter(r => !r.is_resolved);
+
+    if (!items.length) {
+        const msg = activeFilter === 'resolved' ? 'No resolved recommendations.' : '🎉 All clear! No active recommendations.';
+        document.getElementById('recs-list').innerHTML = `<div class="empty-state"><div style="font-size:2.5rem;margin-bottom:var(--sp-4);">✅</div><h3 class="empty-state-title">${msg}</h3></div>`;
+        return;
+    }
+    const typeLabels = { Revise: 'badge-red', Review: 'badge-amber', Advance: 'badge-green', Wellness: 'badge-blue' };
+    document.getElementById('recs-list').innerHTML = items.map(r => {
+        const priorityBadge = { high: 'badge-red', medium: 'badge-amber', low: 'badge-green' }[r.priority] || 'badge-neutral';
+        const typeBadge = typeLabels[r.type] || 'badge-neutral';
+        return `
+        <div class="card-flat reveal-element" style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-4);flex-wrap:wrap;${r.is_resolved?'opacity:0.6;':''}">
+            <div style="flex:1;min-width:200px;">
+                <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-2);">
+                    <span class="badge ${priorityBadge}">${capitalize(r.priority)} Priority</span>
+                    ${r.type ? `<span class="badge ${typeBadge}">${escHtml(r.type)}</span>` : ''}
+                </div>
+                <h4 style="font-size:0.9375rem;font-weight:700;margin-bottom:4px;">${escHtml(r.title)}</h4>
+                <p style="font-size:0.875rem;color:var(--clr-text-secondary);margin-bottom:4px;">${escHtml(r.body)}</p>
+                ${r.course_name ? `<span style="font-size:0.75rem;font-family:var(--font-mono);color:var(--clr-text-muted);">${escHtml(r.course_name)}</span>` : ''}
+            </div>
+            ${!r.is_resolved ? `
+            <button class="btn btn-ghost btn-sm" onclick="dismissRec(${r.id}, this)" title="Dismiss">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Done
+            </button>` : '<span class="badge badge-neutral">Resolved</span>'}
+        </div>`;
+    }).join('');
+}
+
+async function dismissRec(id, btn) {
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/student-recommendations.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'resolve', id, csrf_token: window.ALMS?.csrfToken || '' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const rec = allRecs.find(r => r.id === id);
+            if (rec) rec.is_resolved = true;
+            renderRecs();
+        }
+    } catch(e) { btn.disabled = false; }
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

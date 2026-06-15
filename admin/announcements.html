@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institution Announcements — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="announcements">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in" style="max-width:760px;">
+            <div class="page-header">
+                <h1 class="page-title">Institution Announcements</h1>
+                <p class="page-subtitle">Broadcast official messages to students, lecturers, administrators, or everyone.</p>
+            </div>
+            
+            <div id="flash-container"></div>
+
+            <div class="dashboard-widget">
+                <form id="announcement-form" style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="input-group">
+                        <label for="role">Audience</label>
+                        <select id="role" name="role" class="input-field" required>
+                            <option value="student">Students</option>
+                            <option value="lecturer">Lecturers</option>
+                            <option value="admin">Administrators</option>
+                            <option value="all">Everyone</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="title">Title</label>
+                        <input id="title" name="title" class="input-field" required placeholder="e.g. Server Maintenance Notice">
+                    </div>
+                    <div class="input-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" class="input-field" rows="5" required placeholder="Type the broadcast message here..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit" id="submit-btn">Broadcast Announcement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.getElementById('announcement-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const flash = document.getElementById('flash-container');
+    const role = document.getElementById('role').value;
+    const title = document.getElementById('title').value;
+    const message = document.getElementById('message').value;
+
+    btn.disabled = true;
+    btn.textContent = 'Broadcasting...';
+    flash.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/admin-announcements.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            credentials: 'include',
+            body: JSON.stringify({ role, title, message })
+        });
+        const data = await res.json();
+        if (data.success) {
+            flash.innerHTML = `<div class="flash-msg success"><span>${escHtml(data.message)}</span></div>`;
+            document.getElementById('title').value = '';
+            document.getElementById('message').value = '';
+            document.getElementById('role').value = 'student';
+        } else {
+            flash.innerHTML = `<div class="flash-msg error"><span>${escHtml(data.message)}</span></div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = '<div class="flash-msg error"><span>Network error. Please try again.</span></div>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Broadcast Announcement';
+        initFlashMessages();
+    }
+});
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

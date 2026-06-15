@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <script src="/assets/js/auth-guard.js" data-role="guest"></script>
+    <style>
+        .step-container { display: none; }
+        .step-container.active { display: block; animation: fadeInUp 0.4s var(--ease-out); }
+        .role-card {
+            border: 2px solid var(--clr-border-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .role-card:hover, .role-card.selected {
+            border-color: var(--clr-primary);
+            background: var(--clr-primary-light);
+            transform: translateY(-4px);
+        }
+        .strength-meter {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            height: 6px;
+        }
+        .strength-meter-bar {
+            flex: 1;
+            height: 100%;
+            background: var(--clr-border);
+            border-radius: 3px;
+            transition: background 0.3s ease;
+        }
+        .strength-meter[data-strength="weak"] .strength-meter-bar:nth-child(1) { background: var(--clr-danger); }
+        .strength-meter[data-strength="fair"] .strength-meter-bar:nth-child(1),
+        .strength-meter[data-strength="fair"] .strength-meter-bar:nth-child(2) { background: var(--clr-warning); }
+        .strength-meter[data-strength="good"] .strength-meter-bar:nth-child(1),
+        .strength-meter[data-strength="good"] .strength-meter-bar:nth-child(2),
+        .strength-meter[data-strength="good"] .strength-meter-bar:nth-child(3) { background: var(--clr-info); }
+        .strength-meter[data-strength="strong"] .strength-meter-bar:nth-child(1),
+        .strength-meter[data-strength="strong"] .strength-meter-bar:nth-child(2),
+        .strength-meter[data-strength="strong"] .strength-meter-bar:nth-child(3),
+        .strength-meter[data-strength="strong"] .strength-meter-bar:nth-child(4) { background: var(--clr-success); }
+    </style>
+</head>
+<body class="film-grain" style="background: var(--clr-bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: var(--sp-6);">
+    <canvas id="synapse-canvas" style="position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.55;"></canvas>
+
+    <div class="glass-card-strong w-full animate-fade-in-up" style="max-width: 540px; position: relative; z-index: 1;">
+        <div style="text-align: center; margin-bottom: var(--sp-6);">
+            <a href="/" style="font-family: var(--font-heading); font-weight: 800; font-size: 1.5rem; color: var(--clr-text); display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                <span style="background: var(--clr-primary); color: #FFFFFF; padding: 4px 8px; border-radius: 6px; font-size: 1.125rem;">ALMS</span>
+                Academic Registrar
+            </a>
+            <p class="text-secondary" style="font-size: 0.875rem; margin-top: var(--sp-2);">Federal College of Animal Health & Production Technology, Ibadan</p>
+        </div>
+
+        <div id="flash-container"></div>
+
+        <!-- Step Indicator -->
+        <div id="step-indicator-wrapper" style="display: none; margin-bottom: var(--sp-6);">
+            <div class="step-dots">
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+                <div class="step-dot"></div>
+            </div>
+        </div>
+
+        <!-- ── STEP 0: Role Selection ── -->
+        <div id="role-selection" class="step-container active">
+            <h2 class="text-center hero-text-cinematic mb-6" style="font-size: 1.5rem;">Select Your Academic Profile</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: var(--sp-6);">
+                <div class="card-elevated role-card text-center" onclick="selectRole('student')" style="padding: 24px;">
+                    <div style="font-size: 2.5rem; margin-bottom: var(--sp-2);">🎓</div>
+                    <h3 style="font-size: 1.125rem; margin-bottom: 8px;">Student</h3>
+                    <p class="text-secondary" style="font-size: 0.75rem;">Access courses, AI tutor, and track academic wellness.</p>
+                </div>
+                <div class="card-elevated role-card text-center" onclick="selectRole('lecturer')" style="padding: 24px;">
+                    <div style="font-size: 2.5rem; margin-bottom: var(--sp-2);">🔬</div>
+                    <h3 style="font-size: 1.125rem; margin-bottom: 8px;">Lecturer</h3>
+                    <p class="text-secondary" style="font-size: 0.75rem;">Build courses, grade assessments, and view classroom health trends.</p>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <p class="text-secondary" style="font-size: 0.875rem;">Already have an account? <a href="/index.html" style="font-weight: 600; color: var(--clr-primary);">Sign in</a></p>
+            </div>
+        </div>
+
+        <!-- ── MAIN FORM ── -->
+        <form id="registration-form" style="display: none;">
+            <!-- Student Forms -->
+            <div id="student-steps">
+                <!-- Student Step 1: Personal Info -->
+                <div class="student-step step-container">
+                    <h3 class="mb-4">Personal Details</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+                        <div class="input-group">
+                            <label for="s-first-name">First Name</label>
+                            <input type="text" id="s-first-name" placeholder="Hamzat" class="input-field">
+                        </div>
+                        <div class="input-group">
+                            <label for="s-last-name">Last Name</label>
+                            <input type="text" id="s-last-name" placeholder="Olasupo" class="input-field">
+                        </div>
+                        <div class="input-group">
+                            <label for="s-email">Email Address</label>
+                            <input type="email" id="s-email" placeholder="hamzat@fcahptib.edu.ng" class="input-field">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Step 2: Academic Info -->
+                <div class="student-step step-container">
+                    <h3 class="mb-4">Academic Registry</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+                        <div class="input-group">
+                            <label for="s-matric">Matriculation Number</label>
+                            <input type="text" id="s-matric" placeholder="FCA/2026/0001" class="input-field">
+                            <span class="input-hint">Must match institutional authorized registration rolls.</span>
+                        </div>
+                        <div class="input-group">
+                            <label for="s-dept">Department</label>
+                            <select id="s-dept" class="input-field">
+                                <option value="">Select Department</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="s-level">Study Level</label>
+                            <select id="s-level" class="input-field">
+                                <option value="">Select Level</option>
+                                <option value="1">ND I</option>
+                                <option value="2">ND II</option>
+                                <option value="3">HND I</option>
+                                <option value="4">HND II</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lecturer Forms -->
+            <div id="lecturer-steps">
+                <!-- Lecturer Step 1: Personal Info -->
+                <div class="lecturer-step step-container">
+                    <h3 class="mb-4">Personal Details</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+                        <div class="input-group">
+                            <label for="l-first-name">First Name</label>
+                            <input type="text" id="l-first-name" placeholder="Timothy" class="input-field">
+                        </div>
+                        <div class="input-group">
+                            <label for="l-last-name">Last Name</label>
+                            <input type="text" id="l-last-name" placeholder="Adegoke" class="input-field">
+                        </div>
+                        <div class="input-group">
+                            <label for="l-email">Email</label>
+                            <input type="email" id="l-email" placeholder="t.adegoke@fcahptib.edu.ng" class="input-field">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lecturer Step 2: Staff Profile -->
+                <div class="lecturer-step step-container">
+                    <h3 class="mb-4">Staff Details</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+                        <div class="input-group">
+                            <label for="l-title">Academic Title</label>
+                            <select id="l-title" class="input-field">
+                                <option value="Mr.">Mr.</option>
+                                <option value="Mrs.">Mrs.</option>
+                                <option value="Dr.">Dr.</option>
+                                <option value="Engineer">Engineer</option>
+                                <option value="Prof.">Prof.</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="l-dept">Primary Department</label>
+                            <select id="l-dept" class="input-field">
+                                <option value="">Select Primary Department</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shared Step 3: Password Configuration -->
+            <div id="shared-password-step" class="step-container">
+                <h3 class="mb-4">Security Credentials</h3>
+                <div style="display: flex; flex-direction: column; gap: var(--sp-4);">
+                    <div class="input-group">
+                        <label for="pw">Password</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="pw" required class="input-field">
+                            <button type="button" class="toggle-pw" aria-label="Toggle Password Visibility">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="strength-meter" id="pw-strength">
+                            <div class="strength-meter-bar"></div>
+                            <div class="strength-meter-bar"></div>
+                            <div class="strength-meter-bar"></div>
+                            <div class="strength-meter-bar"></div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="pw-confirm">Confirm Password</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="pw-confirm" required class="input-field">
+                            <button type="button" class="toggle-pw" aria-label="Toggle Password Visibility">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Controls -->
+            <div style="display: flex; justify-content: space-between; margin-top: var(--sp-8); gap: 16px;">
+                <button type="button" id="back-btn" class="btn btn-outline" onclick="prevStep()">Back</button>
+                <button type="button" id="next-btn" class="btn btn-primary" onclick="nextStep()">Continue</button>
+                <button type="submit" id="submit-btn" class="btn btn-primary" style="display: none;">Register Account</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/assets/js/main.js"></script>
+    <script>
+        let currentRole = '';
+        let currentStep = 0;
+        const totalSteps = 3;
+        let csrfToken = '';
+
+        const roleSelection = document.getElementById('role-selection');
+        const form = document.getElementById('registration-form');
+        const stepIndicator = document.getElementById('step-indicator-wrapper');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const dots = document.querySelectorAll('.step-dot');
+
+        // Fetch departments and levels on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/bootstrap.php');
+                const data = await res.json();
+                if (data.success) {
+                    csrfToken = data.csrf_token;
+                    const depts = data.departments || [];
+                    
+                    const sDept = document.getElementById('s-dept');
+                    const lDept = document.getElementById('l-dept');
+
+                    const optionsHtml = depts.map(d => `
+                        <option value="${d.id}" data-levels="${escHtml(d.level_offered)}">${escHtml(d.name)}</option>
+                    `).join('');
+
+                    sDept.innerHTML = '<option value="">Select Department</option>' + optionsHtml;
+                    lDept.innerHTML = '<option value="">Select Primary Department</option>' + optionsHtml;
+                }
+            } catch(e) {}
+        });
+
+        function selectRole(role) {
+            currentRole = role;
+            roleSelection.classList.remove('active');
+            roleSelection.style.display = 'none';
+            form.style.display = 'block';
+            stepIndicator.style.display = 'block';
+            
+            // Activate first step
+            currentStep = 1;
+            updateStepDisplay();
+        }
+
+        function updateStepDisplay() {
+            // Hide all steps
+            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+            
+            // Show current step based on role
+            let targetStep;
+            if (currentStep === 3) {
+                targetStep = document.getElementById('shared-password-step');
+            } else {
+                const selector = `.${currentRole}-step`;
+                targetStep = document.querySelectorAll(selector)[currentStep - 1];
+            }
+
+            if (targetStep) {
+                targetStep.classList.add('active');
+            }
+
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index === currentStep - 1) {
+                    dot.classList.add('active');
+                } else if (index < currentStep - 1) {
+                    dot.classList.add('completed');
+                }
+            });
+
+            // Update button visibility
+            if (currentStep === totalSteps) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-flex';
+            } else {
+                nextBtn.style.display = 'inline-flex';
+                submitBtn.style.display = 'none';
+            }
+        }
+
+        function nextStep() {
+            if (!validateStep(currentStep)) return;
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepDisplay();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepDisplay();
+            } else {
+                // Return to selection
+                form.style.display = 'none';
+                stepIndicator.style.display = 'none';
+                roleSelection.style.display = 'block';
+                roleSelection.classList.add('active');
+            }
+        }
+
+        function validateStep(step) {
+            let inputs = [];
+            if (step === 3) {
+                inputs = document.getElementById('shared-password-step').querySelectorAll('input[required]');
+            } else {
+                const selector = `.${currentRole}-step`;
+                const activeContainer = document.querySelectorAll(selector)[step - 1];
+                inputs = activeContainer.querySelectorAll('input, select');
+            }
+
+            let valid = true;
+            inputs.forEach(input => {
+                input.classList.remove('error');
+                if (input.hasAttribute('required') || step < 3) {
+                    if (!input.value.trim()) {
+                        input.classList.add('error');
+                        valid = false;
+                    }
+                }
+            });
+            
+            // Additional email check
+            if (step === 1) {
+                const emailEl = document.getElementById(`${currentRole === 'student' ? 's' : 'l'}-email`);
+                if (emailEl && emailEl.value) {
+                    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!re.test(emailEl.value)) {
+                        emailEl.classList.add('error');
+                        valid = false;
+                    }
+                }
+            }
+
+            // HND ND check
+            if (step === 2 && currentRole === 'student') {
+                const deptSelect = document.getElementById('s-dept');
+                const levelSelect = document.getElementById('s-level');
+                if (deptSelect.value && levelSelect.value) {
+                    const opt = deptSelect.options[deptSelect.selectedIndex];
+                    const levels = opt.dataset.levels || 'ND & HND';
+                    const levelVal = parseInt(levelSelect.value);
+                    if (levels === 'ND ONLY' && levelVal > 2) {
+                        alert(opt.text + ' currently supports ND levels only.');
+                        levelSelect.classList.add('error');
+                        valid = false;
+                    }
+                }
+            }
+
+            return valid;
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'Registering Account...';
+
+            const flash = document.getElementById('flash-container');
+            flash.innerHTML = '';
+
+            const isStudent = currentRole === 'student';
+            const body = {
+                role: currentRole,
+                first_name: document.getElementById(isStudent ? 's-first-name' : 'l-first-name').value.trim(),
+                last_name: document.getElementById(isStudent ? 's-last-name' : 'l-last-name').value.trim(),
+                email: document.getElementById(isStudent ? 's-email' : 'l-email').value.trim(),
+                password: document.getElementById('pw').value,
+                confirm_password: document.getElementById('pw-confirm').value,
+                department_id: document.getElementById(isStudent ? 's-dept' : 'l-dept').value,
+                csrf_token: csrfToken
+            };
+
+            if (isStudent) {
+                body.matric_number = document.getElementById('s-matric').value.trim();
+                body.level_id = document.getElementById('s-level').value;
+            } else {
+                body.title = document.getElementById('l-title').value;
+            }
+
+            try {
+                const res = await fetch('/api/register.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = isStudent 
+                        ? '/index.html?msg=registered_student'
+                        : '/index.html?msg=registered';
+                } else {
+                    flash.innerHTML = `<div class="flash-msg error"><span>${escHtml(data.message || 'Registration failed.')}</span></div>`;
+                    btn.disabled = false;
+                    btn.textContent = 'Register Account';
+                }
+            } catch(err) {
+                flash.innerHTML = `<div class="flash-msg error"><span>Network error. Please try again.</span></div>`;
+                btn.disabled = false;
+                btn.textContent = 'Register Account';
+            }
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+        });
+
+        // Live password strength feedback
+        const pwField = document.getElementById('pw');
+        const strengthMeter = document.getElementById('pw-strength');
+        if (pwField && strengthMeter) {
+            pwField.addEventListener('input', () => {
+                const val = pwField.value;
+                let strength = '';
+                if (val.length >= 8) {
+                    let matches = 0;
+                    if (/[a-z]/.test(val)) matches++;
+                    if (/[A-Z]/.test(val)) matches++;
+                    if (/[0-9]/.test(val)) matches++;
+                    if (/[^A-Za-z0-9]/.test(val)) matches++;
+
+                    if (matches === 1) strength = 'weak';
+                    else if (matches === 2) strength = 'fair';
+                    else if (matches === 3) strength = 'good';
+                    else if (matches === 4) strength = 'strong';
+                } else if (val.length > 0) {
+                    strength = 'weak';
+                }
+                strengthMeter.setAttribute('data-strength', strength);
+            });
+        }
+
+        // ── Synapses Background Canvas ──
+        const synapseCanvas = document.getElementById('synapse-canvas');
+        if (synapseCanvas) {
+            const ctx = synapseCanvas.getContext('2d');
+            let nodes = [];
+            const nodeCount = 45;
+            const maxDistance = 110;
+
+            function resizeSynapseCanvas() {
+                synapseCanvas.width = window.innerWidth;
+                synapseCanvas.height = window.innerHeight;
+            }
+            resizeSynapseCanvas();
+            window.addEventListener('resize', resizeSynapseCanvas);
+
+            class SynapseNode {
+                constructor() {
+                    this.x = Math.random() * synapseCanvas.width;
+                    this.y = Math.random() * synapseCanvas.height;
+                    this.vx = (Math.random() * 0.6 - 0.3);
+                    this.vy = (Math.random() * 0.6 - 0.3);
+                    this.radius = Math.random() * 2 + 1.2;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0 || this.x > synapseCanvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > synapseCanvas.height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(209, 0, 0, 0.3)';
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < nodeCount; i++) {
+                nodes.push(new SynapseNode());
+            }
+
+            function animateSynapse() {
+                ctx.clearRect(0, 0, synapseCanvas.width, synapseCanvas.height);
+                for (let i = 0; i < nodes.length; i++) {
+                    nodes[i].update();
+                    nodes[i].draw();
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const dx = nodes[i].x - nodes[j].x;
+                        const dy = nodes[i].y - nodes[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < maxDistance) {
+                            const opacity = (1 - (dist / maxDistance)) * 0.22;
+                            ctx.beginPath();
+                            ctx.moveTo(nodes[i].x, nodes[i].y);
+                            ctx.lineTo(nodes[j].x, nodes[j].y);
+                            ctx.strokeStyle = `rgba(209, 0, 0, ${opacity})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(animateSynapse);
+            }
+            animateSynapse();
+        }
+
+        function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    </script>
+</body>
+</html>

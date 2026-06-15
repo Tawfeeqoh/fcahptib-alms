@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .vark-card { padding: var(--sp-5); border-radius: var(--radius-xl); border: 2px solid var(--clr-border-light); text-align: center; }
+        .vark-card.v { border-color: #7C3AED; background: #EDE9FE; }
+        .vark-card.a { border-color: #DB2777; background: #FCE7F3; }
+        .vark-card.r { border-color: #2563EB; background: #DBEAFE; }
+        .vark-card.k { border-color: #059669; background: #D1FAE5; }
+        .profile-section { margin-bottom: var(--sp-8); }
+        .profile-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: var(--sp-4); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--clr-border-light); }
+    </style>
+</head>
+<body class="film-grain" data-page="profile">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in" style="max-width:900px;margin:0 auto;">
+            <div class="page-header">
+                <h1 class="page-title">My Profile</h1>
+                <p class="page-subtitle">Manage your academic identity and preferences</p>
+            </div>
+
+            <div id="flash-global"></div>
+
+            <div style="display:grid;grid-template-columns:300px 1fr;gap:var(--sp-6);">
+                <!-- Left Card: Identity -->
+                <div>
+                    <div class="card-flat text-center reveal-element" style="margin-bottom:var(--sp-5);">
+                        <div id="profile-avatar" style="width:80px;height:80px;border-radius:50%;background:var(--clr-primary);color:#FFF;display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:800;margin:0 auto var(--sp-4);"></div>
+                        <h2 id="profile-fullname" style="font-size:1.25rem;font-weight:800;margin-bottom:4px;">Loading...</h2>
+                        <p id="profile-email" class="text-muted text-sm" style="margin-bottom:var(--sp-3);"></p>
+                        <div id="profile-meta" style="display:flex;flex-direction:column;gap:var(--sp-2);text-align:left;"></div>
+                    </div>
+
+                    <!-- VARK Card -->
+                    <div id="vark-card-wrapper" class="vark-card reveal-element" style="margin-bottom:var(--sp-5);">
+                        <div id="vark-icon" style="font-size:2rem;margin-bottom:var(--sp-2);">🎓</div>
+                        <div id="vark-type" style="font-weight:700;font-size:1.125rem;margin-bottom:4px;"></div>
+                        <p id="vark-desc" class="text-secondary text-sm" style="margin-bottom:0;"></p>
+                    </div>
+
+                    <!-- WHO-5 Wellness Card -->
+                    <div class="card-flat reveal-element">
+                        <h4 style="font-size:0.875rem;font-weight:700;margin-bottom:var(--sp-3);">WHO-5 Wellness Index</h4>
+                        <div class="font-mono-data" id="who5-score" style="font-size:2rem;color:var(--clr-primary);font-weight:800;margin-bottom:var(--sp-2);">—/25</div>
+                        <div class="progress-bar"><div class="progress-bar-fill" id="who5-bar" style="width:0%;"></div></div>
+                        <p id="who5-label" class="text-muted text-xs" style="margin-top:var(--sp-2);margin-bottom:0;"></p>
+                    </div>
+                </div>
+
+                <!-- Right: Settings Sections -->
+                <div>
+                    <!-- Pace Preference -->
+                    <div class="dashboard-widget reveal-element profile-section">
+                        <h3>Learning Pace</h3>
+                        <p class="text-secondary text-sm" style="margin-bottom:var(--sp-4);">Choose how content is presented to you in lessons.</p>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);">
+                            <div class="quiz-option" id="pace-express" onclick="setPace('express')">
+                                <div>
+                                    <div style="font-size:1.5rem;margin-bottom:4px;">⚡</div>
+                                    <div style="font-weight:700;font-size:0.9375rem;">Express</div>
+                                    <div class="text-muted text-xs">Key points only, fast navigation</div>
+                                </div>
+                            </div>
+                            <div class="quiz-option" id="pace-standard" onclick="setPace('standard')">
+                                <div>
+                                    <div style="font-size:1.5rem;margin-bottom:4px;">📖</div>
+                                    <div style="font-weight:700;font-size:0.9375rem;">Standard</div>
+                                    <div class="text-muted text-xs">Full lesson with explanations</div>
+                                </div>
+                            </div>
+                            <div class="quiz-option" id="pace-deep" onclick="setPace('deep')">
+                                <div>
+                                    <div style="font-size:1.5rem;margin-bottom:4px;">🔬</div>
+                                    <div style="font-weight:700;font-size:0.9375rem;">Deep Dive</div>
+                                    <div class="text-muted text-xs">Extended content with context</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="pace-saved" class="flash-msg success" style="display:none;margin-top:var(--sp-3);">✓ Pace preference saved.</div>
+                    </div>
+
+                    <!-- Change Email -->
+                    <div class="dashboard-widget reveal-element profile-section">
+                        <h3>Change Email Address</h3>
+                        <div id="email-flash"></div>
+                        <div style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                            <div class="input-group">
+                                <label for="new-email">New Email Address</label>
+                                <input type="email" id="new-email" class="input-field" placeholder="new.email@example.com">
+                            </div>
+                            <div class="input-group">
+                                <label for="current-pw-email">Current Password (to confirm)</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" id="current-pw-email" class="input-field">
+                                    <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="align-self:flex-start;" onclick="changeEmail()">Update Email</button>
+                        </div>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div class="dashboard-widget reveal-element profile-section">
+                        <h3>Change Password</h3>
+                        <div id="pw-flash"></div>
+                        <div style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                            <div class="input-group">
+                                <label for="old-pw">Current Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" id="old-pw" class="input-field">
+                                    <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="new-pw-change">New Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" id="new-pw-change" class="input-field">
+                                    <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                                </div>
+                                <div class="strength-meter" id="pw-strength-meter">
+                                    <div class="strength-meter-bar"></div><div class="strength-meter-bar"></div>
+                                    <div class="strength-meter-bar"></div><div class="strength-meter-bar"></div>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="confirm-pw-change">Confirm New Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" id="confirm-pw-change" class="input-field">
+                                    <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="align-self:flex-start;" onclick="changePassword()">Update Password</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const VARK_DATA = {
+    V: { label:'Visual Learner', icon:'👁️', desc:'You learn best through diagrams, charts, and written content. Your content is optimised with visual cues and structured layouts.', cls:'v' },
+    A: { label:'Auditory Learner', icon:'🎧', desc:'You absorb information through explanations and discussion. Your content is delivered in a conversational, narrative style.', cls:'a' },
+    R: { label:'Read/Write Learner', icon:'📖', desc:'You prefer reading and note-taking. Your content is rich in text, definitions, and structured summaries.', cls:'r' },
+    K: { label:'Kinesthetic Learner', icon:'⚙️', desc:'You learn by doing and practising. Your content includes examples, case studies, and hands-on walkthroughs.', cls:'k' },
+};
+
+let currentPace = 'standard';
+
+document.addEventListener('alms:session-ready', async function(e) {
+    const user = e.detail;
+    try {
+        const res = await fetch('/api/student-profile.php', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success) return;
+        const u = data.user || {};
+        const p = data.profile || {};
+
+        const fn = u.first_name || ''; const ln = u.last_name || '';
+        const initials = (fn.charAt(0) + ln.charAt(0)).toUpperCase();
+        document.getElementById('profile-avatar').textContent = initials;
+        document.getElementById('profile-fullname').textContent = `${fn} ${ln}`.trim();
+        document.getElementById('profile-email').textContent = u.email || '';
+
+        const levelNames = {1:'ND I', 2:'ND II', 3:'HND I', 4:'HND II'};
+        document.getElementById('profile-meta').innerHTML = `
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--clr-border-light);">
+                <span class="text-muted text-sm">Matric No.</span>
+                <span class="font-mono-data text-sm">${escHtml(p.matric_number||'—')}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;border-bottom:1px solid var(--clr-border-light);">
+                <span class="text-muted text-sm">Department</span>
+                <span style="font-size:0.8125rem;font-weight:600;text-align:right;max-width:160px;">${escHtml(p.department_name||'—')}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:var(--sp-2) 0;">
+                <span class="text-muted text-sm">Level</span>
+                <span class="badge badge-blue">${levelNames[p.level_id]||'—'}</span>
+            </div>`;
+
+        // VARK
+        const vark = VARK_DATA[p.vark_style] || VARK_DATA['V'];
+        const wrapper = document.getElementById('vark-card-wrapper');
+        wrapper.classList.add(vark.cls);
+        document.getElementById('vark-icon').textContent = vark.icon;
+        document.getElementById('vark-type').textContent = vark.label;
+        document.getElementById('vark-desc').textContent = vark.desc;
+
+        // WHO-5
+        const who5 = p.who5_score || 0;
+        document.getElementById('who5-score').textContent = `${who5}/25`;
+        gsap.to('#who5-bar', { width: `${(who5/25)*100}%`, duration: 1.0, ease:'power2.out' });
+        document.getElementById('who5-label').textContent = who5 <= 12 ? '😔 Low wellbeing — pacing adjusted' : who5 <= 17 ? '😊 Moderate wellbeing — balanced pacing' : '🔥 High wellbeing — you\'re thriving!';
+
+        // Pace
+        currentPace = p.current_pace || 'standard';
+        highlightPace(currentPace);
+
+    } catch(e) {}
+});
+
+function highlightPace(pace) {
+    ['express','standard','deep'].forEach(p => {
+        document.getElementById(`pace-${p}`).classList.toggle('selected', p === pace);
+    });
+}
+
+async function setPace(pace) {
+    currentPace = pace;
+    highlightPace(pace);
+    try {
+        await fetch('/api/student-profile.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update_pace', pace, csrf_token: window.ALMS?.csrfToken || '' })
+        });
+        const saved = document.getElementById('pace-saved');
+        saved.style.display = 'flex';
+        setTimeout(() => { saved.style.display = 'none'; }, 3000);
+    } catch(e) {}
+}
+
+async function changeEmail() {
+    const email = document.getElementById('new-email').value.trim();
+    const pw = document.getElementById('current-pw-email').value;
+    const flash = document.getElementById('email-flash');
+    if (!email || !pw) { flash.innerHTML = '<div class="flash-msg error"><span>Please fill in all fields.</span></div>'; return; }
+    try {
+        const res = await fetch('/api/student-profile.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update_email', email, password: pw, csrf_token: window.ALMS?.csrfToken || '' })
+        });
+        const data = await res.json();
+        if (data.success) { flash.innerHTML = '<div class="flash-msg success"><span>Email updated successfully.</span></div>'; document.getElementById('profile-email').textContent = email; }
+        else flash.innerHTML = `<div class="flash-msg error"><span>${data.message || 'Update failed.'}</span></div>`;
+    } catch(e) { flash.innerHTML = '<div class="flash-msg error"><span>Network error.</span></div>'; }
+}
+
+async function changePassword() {
+    const old = document.getElementById('old-pw').value;
+    const nw  = document.getElementById('new-pw-change').value;
+    const cf  = document.getElementById('confirm-pw-change').value;
+    const flash = document.getElementById('pw-flash');
+    if (!old || !nw || !cf) { flash.innerHTML = '<div class="flash-msg error"><span>Please fill in all fields.</span></div>'; return; }
+    if (nw !== cf) { flash.innerHTML = '<div class="flash-msg error"><span>New passwords do not match.</span></div>'; return; }
+    if (nw.length < 8) { flash.innerHTML = '<div class="flash-msg error"><span>Password must be at least 8 characters.</span></div>'; return; }
+    try {
+        const res = await fetch('/api/student-profile.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'change_password', current_password: old, new_password: nw, confirm_password: cf, csrf_token: window.ALMS?.csrfToken || '' })
+        });
+        const data = await res.json();
+        if (data.success) { flash.innerHTML = '<div class="flash-msg success"><span>Password updated successfully.</span></div>'; ['old-pw','new-pw-change','confirm-pw-change'].forEach(id => document.getElementById(id).value = ''); }
+        else flash.innerHTML = `<div class="flash-msg error"><span>${data.message || 'Update failed.'}</span></div>`;
+    } catch(e) { flash.innerHTML = '<div class="flash-msg error"><span>Network error.</span></div>'; }
+}
+
+document.getElementById('new-pw-change').addEventListener('input', function() {
+    const val = this.value; let s = '';
+    if (val.length >= 8) { let m=0; if(/[a-z]/.test(val)) m++; if(/[A-Z]/.test(val)) m++; if(/[0-9]/.test(val)) m++; if(/[^A-Za-z0-9]/.test(val)) m++; if(m===1)s='weak'; else if(m===2)s='fair'; else if(m===3)s='good'; else s='strong'; } else if(val.length>0) s='weak';
+    document.getElementById('pw-strength-meter').setAttribute('data-strength', s);
+});
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

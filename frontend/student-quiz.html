@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizzes - ALMS</title>
+    <meta name="description" content="Student quiz portal for ALMS with live question navigation and submission.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .quiz-panel {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .quiz-card {
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            background: var(--clr-surface);
+        }
+        .quiz-card + .quiz-card { margin-top: 18px; }
+        .quiz-action {
+            display: inline-flex;
+            padding: 10px 16px;
+            border-radius: 9999px;
+            background: var(--clr-primary);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .quiz-progress {
+            width: 100%;
+            height: 10px;
+            border-radius: 9999px;
+            background: var(--clr-bg);
+            overflow: hidden;
+            margin-top: 16px;
+        }
+        .quiz-progress-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--clr-primary), #FF5A5A);
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+        .quiz-option {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 14px;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 16px;
+            cursor: pointer;
+            align-items: center;
+        }
+        .quiz-option.selected { border-color: var(--clr-primary); background: rgba(255, 90, 90, 0.08); }
+        .quiz-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: space-between;
+        }
+        .quiz-review {
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-quiz">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-quiz.html" class="static-brand">
+                <span>ALMS</span>
+                Quizzes
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px; padding-bottom: 80px;">
+        <section class="container">
+            <div style="margin-bottom: 30px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:14px; align-items:center;">
+                <div>
+                    <p class="static-eyebrow">Quiz Portal</p>
+                    <h1 style="margin:0;">Quizzes</h1>
+                    <p class="text-secondary" style="max-width:640px; margin-top:12px;">Attempt live quizzes, view your latest score, and submit answers with a modern flow.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-outline">Courses</a>
+                    <a href="./student-gradebook.html" class="btn btn-outline">Gradebook</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="quiz-alert" class="static-alert" hidden></div>
+            <div id="quiz-list"></div>
+            <div id="quiz-player" hidden></div>
+            <div id="quiz-results" hidden></div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

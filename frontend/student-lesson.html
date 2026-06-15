@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Player - ALMS</title>
+    <meta name="description" content="Interactive lesson player for ALMS students.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .lesson-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 24px;
+        }
+        .lesson-sidebar,
+        .lesson-body {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 22px;
+        }
+        .lesson-navigation {
+            display: grid;
+            gap: 12px;
+        }
+        .lesson-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid var(--clr-border-light);
+            text-decoration: none;
+            color: inherit;
+            background: var(--clr-bg);
+        }
+        .lesson-item.active {
+            border-color: var(--clr-primary);
+            background: var(--clr-primary-light);
+        }
+        .lesson-item span {
+            font-size: 0.92rem;
+        }
+        .pace-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .pace-button {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--clr-border-light);
+            background: var(--clr-surface);
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .pace-button.active {
+            border-color: var(--clr-primary);
+            background: var(--clr-primary-light);
+            color: var(--clr-primary);
+        }
+        .lesson-content h3,
+        .lesson-content h4 {
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        .lesson-content p {
+            margin-bottom: 14px;
+            line-height: 1.75;
+        }
+        .lesson-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .lesson-actions .btn {
+            min-width: 155px;
+        }
+        @media (max-width: 980px) {
+            .lesson-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-lesson">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-lesson.html" class="static-brand">
+                <span>ALMS</span>
+                Lesson Player
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px;">
+        <section class="container">
+            <div class="lesson-header">
+                <div>
+                    <p class="static-eyebrow">Course lesson player</p>
+                    <h1 style="margin:0; font-size: clamp(2rem, 4vw, 3rem);">Study at your own pace.</h1>
+                    <p class="text-secondary" style="max-width: 720px;">Choose your pacing style, browse module progress, and mark lessons complete as you learn.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap: wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-outline">Courses</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="lesson-alert" class="static-alert" hidden></div>
+
+            <div class="lesson-grid">
+                <aside class="lesson-sidebar">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                        <div>
+                            <p class="text-secondary" style="margin:0;">Course</p>
+                            <h2 id="lesson-course-title" style="margin:8px 0 0; font-size:1.1rem;"></h2>
+                        </div>
+                        <span id="lesson-module-tag" class="badge badge-neutral"></span>
+                    </div>
+                    <div class="lesson-navigation" id="lesson-list"></div>
+                </aside>
+
+                <article class="lesson-body">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:22px;">
+                        <div>
+                            <p class="text-secondary" style="margin:0;">Current module</p>
+                            <h3 id="lesson-title" style="margin:10px 0 0;"></h3>
+                        </div>
+                        <div class="pace-buttons" id="pace-buttons"></div>
+                    </div>
+                    <div id="lesson-content" class="lesson-content"></div>
+                    <div class="lesson-actions">
+                        <button id="lesson-complete-button" class="btn btn-primary">Complete & Next Module</button>
+                        <a href="/student/ai-assistant.php" class="btn btn-outline">Ask AI Assistant</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Staff — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="lecturers">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            
+            <div id="flash-container"></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--sp-6);">
+                <div>
+                    <h2 style="font-size: 1.5rem; font-weight:700;">Academic Staff Management</h2>
+                    <p class="text-secondary text-sm">Approve lecturer logins, assign teachable courses, and audit classroom assignments.</p>
+                </div>
+            </div>
+
+            <!-- Tabs Switcher -->
+            <div class="tabs" style="margin-bottom:var(--sp-4);">
+                <button class="tab-btn active" id="btn-pending" onclick="switchTab('pending')">
+                    Pending Approval (<span id="pending-count">0</span>)
+                </button>
+                <button class="tab-btn" id="btn-active" onclick="switchTab('active')">
+                    Active Staff (<span id="active-count">0</span>)
+                </button>
+            </div>
+
+            <!-- ── TAB 1: PENDING APPROVAL ── -->
+            <div id="tab-pending" class="dashboard-widget tab-content active" style="overflow-x: auto;">
+                <div id="pending-list-container">
+                    <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+                </div>
+            </div>
+
+            <!-- ── TAB 2: ACTIVE & SUSPENDED STAFF ── -->
+            <div id="tab-active" class="dashboard-widget tab-content" style="display:none; overflow-x: auto;">
+                <div id="active-list-container">
+                    <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-xl);"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── COURSE ASSIGNMENT MODAL ── -->
+<div class="modal-overlay" id="assign-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 style="font-size:1.125rem; font-weight:700; margin:0;" id="modal-title">Assign Course Portfolio</h3>
+            <button class="modal-close" onclick="closeAssignModal()">&times;</button>
+        </div>
+        <form id="assign-form" style="display:flex; flex-direction:column; gap:16px;">
+            <input type="hidden" id="modal-lecturer-id">
+
+            <div class="input-group">
+                <label>Staff Member</label>
+                <input type="text" id="modal-lecturer-name" class="input-field" readonly style="background:var(--clr-bg); font-weight:600;">
+            </div>
+
+            <div class="input-group">
+                <label for="modal-course-select">Select Course Code</label>
+                <select id="modal-course-select" required class="input-field">
+                    <option value="">Choose Course</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="modal-dept-select">Select Teaching Department</label>
+                <select id="modal-dept-select" required class="input-field">
+                    <option value="">Choose Department</option>
+                </select>
+                <span class="input-hint">Teachable courses can map across different departments.</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:10px;">Confirm Assignment</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', loadStaffData);
+
+async function loadStaffData() {
+    let data;
+    try {
+        const res = await fetch('/api/admin-lecturers.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(err) { return; }
+    if (!data.success) return;
+
+    const pending = data.pending_staff || [];
+    const active = data.active_staff || [];
+
+    document.getElementById('pending-count').textContent = pending.length;
+    document.getElementById('active-count').textContent = active.length;
+
+    // Render Pending
+    const pendCont = document.getElementById('pending-list-container');
+    if (pending.length === 0) {
+        pendCont.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">✅</div>
+                <div class="empty-state-title">No Pending Requests</div>
+                <p class="empty-state-desc">All lecturer login credentials are verified and active.</p>
+            </div>`;
+    } else {
+        pendCont.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Academic Email</th>
+                        <th>Primary Department</th>
+                        <th>Registered Date</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${pending.map(lec => `
+                        <tr>
+                            <td><strong>${escHtml(lec.title)} ${escHtml(lec.first_name)} ${escHtml(lec.last_name)}</strong></td>
+                            <td class="font-mono-data text-muted">${escHtml(lec.email)}</td>
+                            <td>${escHtml(lec.dept_name)}</td>
+                            <td class="font-mono-data text-muted" data-date="${escHtml(lec.created_at)}"></td>
+                            <td style="text-align:right;">
+                                <button class="btn btn-success btn-sm" onclick="postAction('approve', ${lec.id})">Verify & Approve</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Render Active
+    const activeCont = document.getElementById('active-list-container');
+    if (active.length === 0) {
+        activeCont.innerHTML = `<p class="text-muted text-center py-6">No active staff members registered.</p>`;
+    } else {
+        activeCont.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title & Name</th>
+                        <th>Email</th>
+                        <th>Primary Dept</th>
+                        <th>Teachable Assignments</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${active.map(lec => {
+                        const asList = lec.assignments || [];
+                        return `
+                            <tr>
+                                <td>
+                                    <strong>${escHtml(lec.title)} ${escHtml(lec.first_name)} ${escHtml(lec.last_name)}</strong>
+                                    ${lec.status === 'suspended' ? '<span class="badge badge-red" style="margin-left:4px;">Suspended</span>' : ''}
+                                </td>
+                                <td class="font-mono-data text-muted">${escHtml(lec.email)}</td>
+                                <td>${escHtml(lec.dept_name)}</td>
+                                <td>
+                                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                                        ${asList.length === 0 ? `
+                                            <span class="text-xs text-muted">None assigned</span>
+                                        ` : asList.map(as => `
+                                            <span class="badge badge-blue" style="display:inline-flex; align-items:center; gap:4px;">
+                                                ${escHtml(as.course_code)} (${escHtml(as.dept_name.substring(0, 5))}...)
+                                                <button onclick="postAction('remove_course', null, ${as.assignment_id})" style="background:none; border:none; color:var(--clr-danger); cursor:pointer; font-weight:700; padding:0 2px;">&times;</button>
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </td>
+                                <td style="text-align:right;">
+                                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                                        <button class="btn btn-outline btn-sm" onclick="openAssignModal(${lec.id}, '${escHtml(lec.title)} ${escHtml(lec.first_name)} ${escHtml(lec.last_name)}')">Assign Course</button>
+                                        <button class="btn ${lec.status === 'suspended' ? 'btn-success' : 'btn-danger'} btn-sm" onclick="postAction('${lec.status === 'suspended' ? 'unsuspend' : 'suspend'}', ${lec.id})">
+                                            ${lec.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Modal select lists
+    const courseSel = document.getElementById('modal-course-select');
+    const deptSel = document.getElementById('modal-dept-select');
+
+    courseSel.innerHTML = '<option value="">Choose Course</option>' + (data.courses || []).map(c => `
+        <option value="${c.id}">${escHtml(c.course_code)} — ${escHtml(c.course_name)}</option>
+    `).join('');
+
+    deptSel.innerHTML = '<option value="">Choose Department</option>' + (data.departments || []).map(d => `
+        <option value="${d.id}">${escHtml(d.name)}</option>
+    `).join('');
+
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+}
+
+async function postAction(action, lecturerId, assignmentId = null) {
+    const flash = document.getElementById('flash-container');
+    flash.innerHTML = '';
+
+    const body = { action };
+    if (lecturerId !== null) body.lecturer_id = lecturerId;
+    if (assignmentId !== null) body.assignment_id = assignmentId;
+
+    try {
+        const res = await fetch('/api/admin-lecturers.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            body: JSON.stringify(body)
+        });
+        const d = await res.json();
+        if (d.success) {
+            flash.innerHTML = `<div class="flash-msg success">${escHtml(d.message)}</div>`;
+            await loadStaffData();
+        } else {
+            flash.innerHTML = `<div class="flash-msg error">${escHtml(d.message || 'Error processing request.')}</div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = `<div class="flash-msg error">Network error processing request.</div>`;
+    } finally {
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + tab).classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById('tab-' + tab).style.display = 'block';
+}
+
+function openAssignModal(id, name) {
+    document.getElementById('modal-lecturer-id').value = id;
+    document.getElementById('modal-lecturer-name').value = name;
+    document.getElementById('assign-modal').classList.add('active');
+}
+
+function closeAssignModal() {
+    document.getElementById('assign-modal').classList.remove('active');
+}
+
+document.getElementById('assign-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    closeAssignModal();
+    const flash = document.getElementById('flash-container');
+    flash.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/admin-lecturers.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            body: JSON.stringify({
+                action: 'assign_course',
+                lecturer_id: document.getElementById('modal-lecturer-id').value,
+                course_id: document.getElementById('modal-course-select').value,
+                department_id: document.getElementById('modal-dept-select').value
+            })
+        });
+        const d = await res.json();
+        if (d.success) {
+            flash.innerHTML = `<div class="flash-msg success">${escHtml(d.message)}</div>`;
+            await loadStaffData();
+        } else {
+            flash.innerHTML = `<div class="flash-msg error">${escHtml(d.message || 'Error assigning course.')}</div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = `<div class="flash-msg error">Network error assigning course.</div>`;
+    } finally {
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+});
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

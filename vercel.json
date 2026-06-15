@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://fcahptibalms.great-site.net/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://fcahptibalms.great-site.net/uploads/:path*"
+    }
+  ]
+}

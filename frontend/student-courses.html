@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses - ALMS</title>
+    <meta name="description" content="Student course portfolio and module progress for ALMS.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .courses-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 22px;
+        }
+        .course-card {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .course-card-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: center;
+        }
+        .course-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 149, 0, 0.1);
+            font-size: 1.35rem;
+        }
+        .course-card-code {
+            font-weight: 700;
+            color: var(--clr-text);
+        }
+        .course-card-title {
+            font-size: 1.1rem;
+            margin: 8px 0 0;
+        }
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            color: var(--clr-text-secondary);
+            font-size: 0.92rem;
+        }
+        @media (max-width: 780px) {
+            .courses-header { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-courses">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-courses.html" class="static-brand">
+                <span>ALMS</span>
+                Courses
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px;">
+        <section class="container">
+            <div class="courses-header">
+                <div>
+                    <p class="static-eyebrow">Academic portfolio</p>
+                    <h1 style="font-size: clamp(2rem, 4vw, 3rem); margin: 0;">My Active Courses</h1>
+                    <p class="text-secondary" style="max-width: 720px;">Track your enrolled curriculum, module completion, and quick access to lesson players.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap: wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-achievements.html" class="btn btn-outline">Achievements</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="courses-alert" class="static-alert" hidden></div>
+            <div id="courses-container" class="courses-grid"></div>
+            <div id="courses-empty" class="empty-state card-flat" hidden>
+                <div class="empty-state-icon">📚</div>
+                <div class="empty-state-title">No Enrolled Courses</div>
+                <p class="empty-state-desc">Your department has not published active curriculum paths for this level yet.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

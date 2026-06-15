@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievements - ALMS</title>
+    <meta name="description" content="Student achievements, badges, and XP history for ALMS.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .achievements-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 22px;
+        }
+        .achievement-card,
+        .xp-card {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 22px;
+        }
+        .badges-list,
+        .xp-list {
+            display: grid;
+            gap: 14px;
+        }
+        .badge-item {
+            background: var(--clr-surface);
+            border-radius: var(--radius-xl);
+            padding: 16px;
+            display: grid;
+            gap: 8px;
+        }
+        .xp-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .xp-table th,
+        .xp-table td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--clr-border-light);
+        }
+        .xp-table th {
+            font-weight: 700;
+        }
+        .xp-table td:last-child {
+            color: var(--clr-text-secondary);
+        }
+        .xp-table .xp-value {
+            font-family: var(--font-mono);
+        }
+        @media (max-width: 900px) {
+            .achievements-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-achievements">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-achievements.html" class="static-brand">
+                <span>ALMS</span>
+                Achievements
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px;">
+        <section class="container">
+            <div class="achievements-header">
+                <div>
+                    <p class="static-eyebrow">Learning rewards</p>
+                    <h1 style="font-size: clamp(2rem, 4vw, 3rem); margin: 0;">Your XP and badges</h1>
+                    <p class="text-secondary" style="max-width: 720px;">View your achievement progress, current streaks, and recent XP activity from the student portal.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap: wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-outline">Courses</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="achievements-alert" class="static-alert" hidden></div>
+
+            <div class="achievements-grid">
+                <section class="achievement-card">
+                    <h2 style="font-size: 1.1rem; margin-bottom: 18px;">Achievement summary</h2>
+                    <div class="stats-row" id="achievement-stats"></div>
+                </section>
+                <section class="xp-card">
+                    <h2 style="font-size: 1.1rem; margin-bottom: 18px;">Recent XP history</h2>
+                    <div id="achievement-xp"></div>
+                </section>
+            </div>
+
+            <section class="achievement-card" style="margin-top: 24px;">
+                <h2 style="font-size: 1.1rem; margin-bottom: 18px;">Badges</h2>
+                <div id="achievement-badges" class="badges-list"></div>
+            </section>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

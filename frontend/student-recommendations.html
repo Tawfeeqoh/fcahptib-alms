@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendations - ALMS</title>
+    <meta name="description" content="Learning recommendations and revision actions for ALMS students.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .recommendations-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 18px;
+        }
+        .recommendation-card {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .recommendation-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .recommendation-badge {
+            border-radius: 9999px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .recommendation-badge.high { background: rgba(255, 59, 48, 0.12); color: var(--clr-danger); }
+        .recommendation-badge.medium { background: rgba(255, 149, 0, 0.12); color: var(--clr-warning); }
+        .recommendation-badge.low { background: rgba(52, 199, 89, 0.12); color: var(--clr-success); }
+        .recommendation-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--clr-text-secondary);
+            font-size: 0.9rem;
+        }
+        .recommendation-empty {
+            display: grid;
+            place-items: center;
+            padding: 48px 28px;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            background: var(--clr-surface);
+            text-align: center;
+        }
+        @media (max-width: 780px) {
+            .recommendations-header { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-recommendations">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-recommendations.html" class="static-brand">
+                <span>ALMS</span>
+                Recommendations
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px;">
+        <section class="container">
+            <div class="recommendations-header">
+                <div>
+                    <p class="static-eyebrow">Study guidance</p>
+                    <h1 style="font-size: clamp(2rem, 4vw, 3rem); margin: 0;">Learning recommendations</h1>
+                    <p class="text-secondary" style="max-width: 720px;">Actionable revision and review paths generated from your current progress and quiz performance.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap: wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-primary">Courses</a>
+                </div>
+            </div>
+
+            <div id="recommendations-alert" class="static-alert" hidden></div>
+            <div id="recommendations-list" class="recommendations-grid"></div>
+            <div id="recommendations-empty" class="recommendation-empty" hidden>
+                <div>
+                    <div class="empty-state-icon" style="font-size:2rem; margin-bottom:14px;">✨</div>
+                    <p class="empty-state-title" style="margin:0; font-weight:700;">No active recommendations</p>
+                    <p class="text-secondary" style="margin:12px 0 0;">Keep engaging with lessons and quizzes to receive personalised study pathways.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

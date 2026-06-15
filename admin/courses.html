@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="courses">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--sp-4);">
+                <div>
+                    <h1 class="page-title">Course Register</h1>
+                    <p class="page-subtitle">Manage courses across all departments</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">+ Add Course</button>
+            </div>
+            <div id="flash-global"></div>
+
+            <!-- Filters -->
+            <div style="display:flex;gap:var(--sp-3);margin-bottom:var(--sp-5);flex-wrap:wrap;">
+                <select id="filter-dept" class="input-field" style="max-width:220px;" onchange="filterCourses()">
+                    <option value="">All Departments</option>
+                </select>
+                <select id="filter-level" class="input-field" style="max-width:160px;" onchange="filterCourses()">
+                    <option value="">All Levels</option>
+                    <option value="ND">ND</option>
+                    <option value="HND">HND</option>
+                </select>
+                <input type="search" id="course-search" class="input-field" placeholder="Search courses..." style="max-width:220px;">
+            </div>
+
+            <div class="dashboard-widget" style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead><tr><th>Code</th><th>Course Name</th><th>Department</th><th>Level</th><th>Assigned To</th><th></th></tr></thead>
+                    <tbody id="courses-tbody"><tr><td colspan="6" style="text-align:center;color:var(--clr-text-muted);padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="course-modal">
+    <div class="modal-card" style="max-width:520px;">
+        <div class="modal-header">
+            <h3 id="modal-title">Add Course</h3>
+            <button class="modal-close" onclick="closeModal()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="modal-flash"></div>
+        <input type="hidden" id="modal-course-id">
+        <div style="display:flex;flex-direction:column;gap:var(--sp-4);">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);">
+                <div class="input-group">
+                    <label for="course-code">Course Code</label>
+                    <input type="text" id="course-code" class="input-field" placeholder="e.g. CSC 311">
+                </div>
+                <div class="input-group">
+                    <label for="course-level">Level</label>
+                    <select id="course-level" class="input-field">
+                        <option value="ND">ND</option>
+                        <option value="HND">HND</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="course-name">Course Name</label>
+                <input type="text" id="course-name" class="input-field" placeholder="e.g. Data Structures & Algorithms">
+            </div>
+            <div class="input-group">
+                <label for="course-dept">Department</label>
+                <select id="course-dept" class="input-field"><option value="">Select Department</option></select>
+            </div>
+            <div class="input-group">
+                <label for="course-lecturer">Assign Lecturer (optional)</label>
+                <select id="course-lecturer" class="input-field"><option value="">None / Unassigned</option></select>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:var(--sp-4);" onclick="saveCourse()">Save Course</button>
+    </div>
+</div>
+
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allCourses = [], allDepts = [], allLecturers = [], editingId = null;
+
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const [cRes, dRes, lRes] = await Promise.all([
+            fetch('/api/admin-courses.php', { credentials: 'include' }),
+            fetch('/api/admin-departments.php?action=list', { credentials: 'include' }),
+            fetch('/api/admin-lecturers.php?action=list', { credentials: 'include' })
+        ]);
+        allCourses   = (await cRes.json()).courses || [];
+        allDepts     = (await dRes.json()).departments || [];
+        allLecturers = (await lRes.json()).lecturers || [];
+
+        // Populate dept filter + modal selects
+        const deptSel = document.getElementById('filter-dept');
+        const deptModal = document.getElementById('course-dept');
+        allDepts.forEach(d => {
+            deptSel.appendChild(new Option(d.name, d.id));
+            deptModal.appendChild(new Option(d.name, d.id));
+        });
+
+        const lectSel = document.getElementById('course-lecturer');
+        allLecturers.filter(l => l.status === 'active').forEach(l => {
+            lectSel.appendChild(new Option(`${l.title||''} ${l.first_name} ${l.last_name}`.trim(), l.id));
+        });
+
+        renderTable();
+    } catch(e) {}
+});
+
+document.getElementById('course-search').addEventListener('input', filterCourses);
+
+function filterCourses() {
+    const dept = document.getElementById('filter-dept').value;
+    const level = document.getElementById('filter-level').value;
+    const q = document.getElementById('course-search').value.toLowerCase();
+    let c = allCourses;
+    if (dept)  c = c.filter(x => x.department_id == dept);
+    if (level) c = c.filter(x => x.level === level);
+    if (q)     c = c.filter(x => `${x.course_code} ${x.course_name}`.toLowerCase().includes(q));
+    renderTable(c);
+}
+
+function renderTable(courses) {
+    const c = courses || allCourses;
+    if (!c.length) { document.getElementById('courses-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--clr-text-muted);padding:40px;">No courses found.</td></tr>'; return; }
+    document.getElementById('courses-tbody').innerHTML = c.map(course => `
+        <tr>
+            <td class="font-mono-data" style="font-weight:700;">${escHtml(course.course_code)}</td>
+            <td>${escHtml(course.course_name)}</td>
+            <td style="font-size:0.8125rem;">${escHtml(course.department_name||'—')}</td>
+            <td><span class="badge badge-neutral">${escHtml(course.level)}</span></td>
+            <td style="font-size:0.8125rem;">${course.lecturer_name ? escHtml(course.lecturer_name) : '<span class="text-muted">Unassigned</span>'}</td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-ghost btn-sm" onclick="editCourse(${course.id})">Edit</button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+function openModal(id) { editingId=id||null; document.getElementById('modal-title').textContent=id?'Edit Course':'Add Course'; document.getElementById('modal-flash').innerHTML=''; if(!id){['course-code','course-name'].forEach(i=>document.getElementById(i).value=''); document.getElementById('course-dept').value=''; document.getElementById('course-lecturer').value='';} document.getElementById('course-modal').classList.add('active'); }
+function editCourse(id) { const c=allCourses.find(c=>c.id===id); if(!c)return; document.getElementById('modal-course-id').value=id; document.getElementById('course-code').value=c.course_code; document.getElementById('course-name').value=c.course_name; document.getElementById('course-level').value=c.level; document.getElementById('course-dept').value=c.department_id||''; document.getElementById('course-lecturer').value=c.lecturer_user_id||''; openModal(id); }
+function closeModal() { document.getElementById('course-modal').classList.remove('active'); }
+
+async function saveCourse() {
+    const code=document.getElementById('course-code').value.trim(); const name=document.getElementById('course-name').value.trim(); const level=document.getElementById('course-level').value; const dept=document.getElementById('course-dept').value; const lect=document.getElementById('course-lecturer').value; const flash=document.getElementById('modal-flash');
+    if(!code||!name||!dept){flash.innerHTML='<div class="flash-msg error"><span>Code, name, and department are required.</span></div>';return;}
+    const payload={action:editingId?'update':'create',course_code:code,course_name:name,level,department_id:dept,lecturer_user_id:lect||null,csrf_token:window.ALMS?.csrfToken||''};
+    if(editingId)payload.id=editingId;
+    try{const res=await fetch('/api/admin-courses.php',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(data.success){closeModal();location.reload();}else flash.innerHTML=`<div class="flash-msg error"><span>${data.message||'Failed.'}</span></div>`;}catch(e){flash.innerHTML='<div class="flash-msg error"><span>Network error.</span></div>';}
+}
+document.getElementById('course-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>

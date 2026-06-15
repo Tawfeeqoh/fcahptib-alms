@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradebook — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+</head>
+<body class="film-grain" data-page="gradebook">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">Gradebook</h1>
+                <p class="page-subtitle">Your quiz performance, assignment grades, and course averages in one place.</p>
+            </div>
+
+            <div class="content-grid">
+                <!-- Quiz Performance -->
+                <section class="dashboard-widget" style="overflow-x:auto;">
+                    <h2 style="font-size:1.125rem; margin-bottom:var(--sp-4);">Quiz Performance</h2>
+                    <div id="quizzes-container">
+                        <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-md);"></div>
+                    </div>
+                </section>
+
+                <!-- Assignment Grades -->
+                <section class="dashboard-widget" style="overflow-x:auto;">
+                    <h2 style="font-size:1.125rem; margin-bottom:var(--sp-4);">Assignment Grades</h2>
+                    <div id="assignments-container">
+                        <div class="animate-shimmer" style="height:150px;border-radius:var(--radius-md);"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    let data;
+    try {
+        const res = await fetch('/api/student-gradebook.php', { credentials: 'include' });
+        data = await res.json();
+    } catch(e) { return; }
+    if (!data.success) return;
+
+    // Render Quizzes
+    const quizRows = data.quizzes || [];
+    const quizCont = document.getElementById('quizzes-container');
+    if (quizRows.length === 0) {
+        quizCont.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-title">No Quiz Attempts Yet</div>
+                <p class="empty-state-desc">Attempt a quiz to begin building your gradebook record.</p>
+            </div>`;
+    } else {
+        quizCont.innerHTML = `
+            <table class="data-table">
+                <thead><tr><th>Course</th><th>Average</th><th>Latest Attempt</th></tr></thead>
+                <tbody>
+                    ${quizRows.map(row => `
+                        <tr>
+                            <td><strong>${escHtml(row.course_code)}</strong><br><span class="text-muted">${escHtml(row.course_name)}</span></td>
+                            <td class="font-mono-data">${row.quiz_avg != null ? row.quiz_avg + '%' : 'N/A'}</td>
+                            <td class="font-mono-data text-muted" data-date="${escHtml(row.last_attempt)}" data-date-style="datetime"></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Render Assignments
+    const assignmentRows = data.assignments || [];
+    const assignmentCont = document.getElementById('assignments-container');
+    if (assignmentRows.length === 0) {
+        assignmentCont.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-title">No Graded Assignments Yet</div>
+                <p class="empty-state-desc">Submitted assignments will appear here once lecturers grade them.</p>
+            </div>`;
+    } else {
+        assignmentCont.innerHTML = `
+            <table class="data-table">
+                <thead><tr><th>Course</th><th>Average Grade</th><th>Submissions</th></tr></thead>
+                <tbody>
+                    ${assignmentRows.map(row => `
+                        <tr>
+                            <td><strong>${escHtml(row.course_code)}</strong><br><span class="text-muted">${escHtml(row.course_name)}</span></td>
+                            <td class="font-mono-data">${row.assignment_avg != null ? row.assignment_avg + ' pts' : 'N/A'}</td>
+                            <td class="font-mono-data">${row.submissions}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // Retrigger layout.js formatting
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+});
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

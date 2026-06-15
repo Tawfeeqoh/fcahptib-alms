@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="logs">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">Security Activity Logs</h1>
+                <p class="page-subtitle">Audit trail of user actions and system events</p>
+            </div>
+            <div style="display:flex;gap:var(--sp-3);margin-bottom:var(--sp-5);flex-wrap:wrap;">
+                <select id="filter-action" class="input-field" style="max-width:220px;" onchange="filterLogs()">
+                    <option value="">All Actions</option>
+                    <option value="login">login</option>
+                    <option value="logout">logout</option>
+                    <option value="failed_login">failed_login</option>
+                    <option value="register">register</option>
+                    <option value="password_reset">password_reset</option>
+                    <option value="account_locked">account_locked</option>
+                </select>
+                <select id="filter-role" class="input-field" style="max-width:180px;" onchange="filterLogs()">
+                    <option value="">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="lecturer">Lecturer</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <input type="search" id="log-search" class="input-field" style="max-width:220px;" placeholder="Search by name or IP...">
+            </div>
+            <div class="dashboard-widget" style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead><tr><th>User</th><th>Role</th><th>Action</th><th>IP Address</th><th>Details</th><th>Time</th></tr></thead>
+                    <tbody id="logs-tbody"><tr><td colspan="6" style="text-align:center;color:var(--clr-text-muted);padding:40px;">Loading...</td></tr></tbody>
+                </table>
+                <div id="load-more" style="text-align:center;margin-top:var(--sp-4);display:none;">
+                    <button class="btn btn-outline" onclick="loadMore()">Load More</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allLogs = [], page = 1;
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/admin-logs.php?page=1&limit=50', { credentials: 'include' });
+        const data = await res.json();
+        allLogs = data.logs || [];
+        renderLogs();
+        if (data.has_more) document.getElementById('load-more').style.display = 'block';
+    } catch(e) {}
+});
+document.getElementById('log-search').addEventListener('input', filterLogs);
+function filterLogs() {
+    const action = document.getElementById('filter-action').value;
+    const role   = document.getElementById('filter-role').value;
+    const q      = document.getElementById('log-search').value.toLowerCase();
+    let logs = allLogs;
+    if (action) logs = logs.filter(l => l.action === action);
+    if (role)   logs = logs.filter(l => l.role === role);
+    if (q)      logs = logs.filter(l => `${l.first_name} ${l.last_name} ${l.ip_address}`.toLowerCase().includes(q));
+    renderLogs(logs);
+}
+function renderLogs(logs) {
+    const l = logs || allLogs;
+    if (!l.length) { document.getElementById('logs-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--clr-text-muted);padding:40px;">No logs found.</td></tr>'; return; }
+    const actionBadge = { login:'badge-green', logout:'badge-neutral', failed_login:'badge-red', register:'badge-blue', password_reset:'badge-amber', account_locked:'badge-red' };
+    document.getElementById('logs-tbody').innerHTML = l.map(log => `<tr>
+        <td><strong>${escHtml(log.first_name||'?')} ${escHtml(log.last_name||'')}</strong></td>
+        <td><span class="badge badge-neutral">${escHtml((log.role||'').toUpperCase())}</span></td>
+        <td><span class="badge ${actionBadge[log.action]||'badge-neutral'} font-mono-data">${escHtml(log.action)}</span></td>
+        <td class="font-mono-data text-muted">${escHtml(log.ip_address||'—')}</td>
+        <td style="font-size:0.8125rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(log.details||'—')}</td>
+        <td class="font-mono-data text-muted">${log.timestamp ? new Intl.DateTimeFormat('en-NG',{dateStyle:'short',timeStyle:'short'}).format(new Date(log.timestamp)) : '—'}</td>
+    </tr>`).join('');
+}
+async function loadMore() { page++; try { const res=await fetch(`/api/admin-logs.php?page=${page}&limit=50`,{credentials:'include'}); const data=await res.json(); allLogs=[...allLogs,...(data.logs||[])]; renderLogs(); if(!data.has_more)document.getElementById('load-more').style.display='none'; } catch(e){} }
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>

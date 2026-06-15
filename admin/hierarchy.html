@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Hierarchy — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="hierarchy">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header">
+                <h1 class="page-title">Academic Hierarchy</h1>
+                <p class="page-subtitle">Faculty, department, programme, level, and course structure for FCAH&PT ALMS.</p>
+            </div>
+            
+            <div id="flash-global"></div>
+
+            <div class="dashboard-widget" style="overflow-x:auto;">
+                <table class="data-table" id="hierarchy-table">
+                    <thead>
+                        <tr>
+                            <th>Faculty</th>
+                            <th>Department</th>
+                            <th>Scope</th>
+                            <th>Programme</th>
+                            <th>Award</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hierarchy-body">
+                        <!-- Shimmer loading state -->
+                        <tr>
+                            <td colspan="5">
+                                <div class="animate-shimmer" style="height:40px; margin: 10px 0; border-radius:4px;"></div>
+                                <div class="animate-shimmer" style="height:40px; margin: 10px 0; border-radius:4px;"></div>
+                                <div class="animate-shimmer" style="height:40px; margin: 10px 0; border-radius:4px;"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/admin-hierarchy.php', { credentials: 'include' });
+        const data = await res.json();
+        
+        if (data.success) {
+            renderHierarchy(data.hierarchy || []);
+        } else {
+            showError(data.message || 'Failed to fetch academic hierarchy.');
+        }
+    } catch(e) {
+        showError('Network error. Failed to load hierarchy data.');
+    }
+});
+
+function renderHierarchy(rows) {
+    const tbody = document.getElementById('hierarchy-body');
+    if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="padding:var(--sp-8); color:var(--clr-text-secondary);">No academic hierarchy configured yet.</td></tr>`;
+        return;
+    }
+    
+    tbody.innerHTML = rows.map(row => `
+        <tr>
+            <td>${escHtml(row.faculty_name || 'Unassigned')}</td>
+            <td><strong>${escHtml(row.department_name)}</strong></td>
+            <td><span class="badge badge-neutral">${escHtml(row.level_offered)}</span></td>
+            <td>${escHtml(row.programme_name || 'Not configured')}</td>
+            <td class="font-mono-data">${escHtml(row.award || '-')}</td>
+        </tr>
+    `).join('');
+}
+
+function showError(msg) {
+    document.getElementById('flash-global').innerHTML = `<div class="flash-msg error"><span>${msg}</span></div>`;
+    document.getElementById('hierarchy-body').innerHTML = `<tr><td colspan="5" class="text-center" style="padding:var(--sp-8); color:var(--clr-text-secondary);">${msg}</td></tr>`;
+}
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+</script>
+</body>
+</html>

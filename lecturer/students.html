@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students — ALMS Lecturer</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="students">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--sp-4);">
+                <div>
+                    <h1 class="page-title">Student Roster</h1>
+                    <p class="page-subtitle">Anonymized class wellness and progress overview</p>
+                </div>
+                <div class="input-group" style="margin-bottom:0;max-width:280px;">
+                    <input type="search" id="student-search" class="input-field" placeholder="Search by name or matric...">
+                </div>
+            </div>
+
+            <!-- Wellness Summary -->
+            <div class="stats-row" style="margin-bottom:var(--sp-6);" id="wellness-stats">
+                <div class="stat-card"><div class="stat-card-icon green"><span style="font-size:1.2rem;">😌</span></div><div><div class="stat-card-value font-mono-data" id="ws-low">—</div><div class="stat-card-label">Low Stress</div></div></div>
+                <div class="stat-card"><div class="stat-card-icon amber"><span style="font-size:1.2rem;">😐</span></div><div><div class="stat-card-value font-mono-data" id="ws-med">—</div><div class="stat-card-label">Moderate Stress</div></div></div>
+                <div class="stat-card"><div class="stat-card-icon red"><span style="font-size:1.2rem;">😰</span></div><div><div class="stat-card-value font-mono-data" id="ws-high">—</div><div class="stat-card-label">High Stress</div></div></div>
+                <div class="stat-card"><div class="stat-card-icon blue"><span style="font-size:1.2rem;">🎓</span></div><div><div class="stat-card-value font-mono-data" id="ws-total">—</div><div class="stat-card-label">Total Students</div></div></div>
+            </div>
+
+            <div class="dashboard-widget" style="overflow-x:auto;">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Student</th><th>Matric No.</th><th>Department</th><th>Level</th><th>VARK</th><th>Pace</th><th>Progress</th><th>Wellness</th>
+                    </tr></thead>
+                    <tbody id="students-tbody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--clr-text-muted);padding:40px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allStudents = [];
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/lecturer-students.php', { credentials: 'include' });
+        const data = await res.json();
+        allStudents = data.students || [];
+
+        // Wellness summary
+        let low = 0, med = 0, high = 0;
+        allStudents.forEach(s => {
+            if (s.stress_level === 'low') low++;
+            else if (s.stress_level === 'medium') med++;
+            else if (s.stress_level === 'high') high++;
+        });
+        document.getElementById('ws-low').textContent = low;
+        document.getElementById('ws-med').textContent = med;
+        document.getElementById('ws-high').textContent = high;
+        document.getElementById('ws-total').textContent = allStudents.length;
+
+        renderTable(allStudents);
+    } catch(e) { document.getElementById('students-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--clr-text-muted);padding:40px;">Could not load students.</td></tr>'; }
+});
+
+document.getElementById('student-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    renderTable(allStudents.filter(s => `${s.first_name} ${s.last_name} ${s.matric_number}`.toLowerCase().includes(q)));
+});
+
+function renderTable(students) {
+    const levelNames = {1:'ND I', 2:'ND II', 3:'HND I', 4:'HND II'};
+    const varkIcons = {V:'👁️', A:'🎧', R:'📖', K:'⚙️'};
+    const paceIcons = {express:'⚡', standard:'📖', deep:'🔬'};
+    if (!students.length) {
+        document.getElementById('students-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--clr-text-muted);padding:40px;">No students found.</td></tr>';
+        return;
+    }
+    document.getElementById('students-tbody').innerHTML = students.map(s => {
+        const stressBadge = s.stress_level === 'high' ? 'badge-red' : s.stress_level === 'medium' ? 'badge-amber' : 'badge-green';
+        const prog = s.progress_pct != null ? s.progress_pct : '?';
+        return `<tr>
+            <td><strong>${escHtml(s.first_name)} ${escHtml(s.last_name)}</strong></td>
+            <td class="font-mono-data">${escHtml(s.matric_number||'')}</td>
+            <td style="font-size:0.8125rem;">${escHtml(s.department_name||'')}</td>
+            <td><span class="badge badge-neutral">${levelNames[s.level_id]||''}</span></td>
+            <td title="${s.vark_style} Learner">${varkIcons[s.vark_style]||''} ${escHtml(s.vark_style||'')}</td>
+            <td>${paceIcons[s.current_pace]||''} ${escHtml(s.current_pace||'')}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="progress-bar" style="flex:1;min-width:60px;"><div class="progress-bar-fill" style="width:${prog}%;"></div></div>
+                    <span class="font-mono-data" style="font-size:0.75rem;">${prog}%</span>
+                </div>
+            </td>
+            <td><span class="badge ${stressBadge}">${capitalize(s.stress_level||'—')}</span></td>
+        </tr>`;
+    }).join('');
+}
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

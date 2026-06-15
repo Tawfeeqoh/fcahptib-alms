@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="departments">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--sp-4);">
+                <div>
+                    <h1 class="page-title">Departments</h1>
+                    <p class="page-subtitle">Manage academic departments and their level offerings</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">+ Add Department</button>
+            </div>
+            <div id="flash-global"></div>
+            <div id="depts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-5);">
+                <div class="animate-shimmer" style="height:140px;border-radius:var(--radius-2xl);"></div>
+                <div class="animate-shimmer" style="height:140px;border-radius:var(--radius-2xl);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="dept-modal">
+    <div class="modal-card" style="max-width:480px;">
+        <div class="modal-header">
+            <h3 id="modal-title">Add Department</h3>
+            <button class="modal-close" onclick="closeModal()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="modal-flash"></div>
+        <input type="hidden" id="modal-dept-id">
+        <div style="display:flex;flex-direction:column;gap:var(--sp-4);">
+            <div class="input-group">
+                <label for="dept-name">Department Name</label>
+                <input type="text" id="dept-name" class="input-field" placeholder="e.g. Computer Science & Information Technology">
+            </div>
+            <div class="input-group">
+                <label for="dept-level">Level Offered</label>
+                <select id="dept-level" class="input-field">
+                    <option value="ND & HND">ND &amp; HND</option>
+                    <option value="ND ONLY">ND Only</option>
+                    <option value="HND ONLY">HND Only</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:var(--sp-4);" onclick="saveDept()" id="modal-save-btn">Save Department</button>
+    </div>
+</div>
+
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let allDepts = [], editingId = null;
+
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/admin-departments.php?action=list', { credentials: 'include' });
+        const data = await res.json();
+        allDepts = data.departments || [];
+        renderDepts();
+    } catch(e) {}
+});
+
+function renderDepts() {
+    if (!allDepts.length) { document.getElementById('depts-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div style="font-size:2rem;">🏛️</div><h3 class="empty-state-title">No Departments Yet</h3></div>`; return; }
+    document.getElementById('depts-grid').innerHTML = allDepts.map(d => `
+        <div class="card-elevated reveal-element">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
+                <h4 style="font-size:0.9375rem;font-weight:700;flex:1;margin-right:var(--sp-2);">${escHtml(d.name)}</h4>
+                <span class="badge badge-neutral" style="flex-shrink:0;">${escHtml(d.level_offered)}</span>
+            </div>
+            <div style="display:flex;gap:var(--sp-3);font-size:0.8125rem;color:var(--clr-text-secondary);margin-bottom:var(--sp-4);">
+                <span>👨‍🏫 ${d.lecturer_count||0} Lecturers</span>
+                <span>🎓 ${d.student_count||0} Students</span>
+                <span>📚 ${d.course_count||0} Courses</span>
+            </div>
+            <div style="display:flex;gap:var(--sp-2);">
+                <button class="btn btn-ghost btn-sm" onclick="editDept(${d.id})">Edit</button>
+                <a href="/admin/courses.html?dept_id=${d.id}" class="btn btn-outline btn-sm">Courses</a>
+            </div>
+        </div>`).join('');
+}
+
+function openModal(id) {
+    editingId = id || null;
+    document.getElementById('modal-title').textContent = id ? 'Edit Department' : 'Add Department';
+    document.getElementById('modal-flash').innerHTML = '';
+    if (!id) { document.getElementById('dept-name').value = ''; document.getElementById('dept-level').value = 'ND & HND'; }
+    document.getElementById('dept-modal').classList.add('active');
+}
+
+function editDept(id) {
+    const d = allDepts.find(d => d.id === id);
+    if (!d) return;
+    document.getElementById('modal-dept-id').value = id;
+    document.getElementById('dept-name').value = d.name;
+    document.getElementById('dept-level').value = d.level_offered;
+    openModal(id);
+}
+
+function closeModal() { document.getElementById('dept-modal').classList.remove('active'); }
+
+async function saveDept() {
+    const name = document.getElementById('dept-name').value.trim();
+    const level = document.getElementById('dept-level').value;
+    const flash = document.getElementById('modal-flash');
+    if (!name) { flash.innerHTML = '<div class="flash-msg error"><span>Department name is required.</span></div>'; return; }
+    const payload = { action: editingId ? 'update' : 'create', name, level_offered: level, csrf_token: window.ALMS?.csrfToken || '' };
+    if (editingId) payload.id = editingId;
+    try {
+        const res = await fetch('/api/admin-departments.php', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) { closeModal(); location.reload(); }
+        else flash.innerHTML = `<div class="flash-msg error"><span>${data.message || 'Failed.'}</span></div>`;
+    } catch(e) { flash.innerHTML = '<div class="flash-msg error"><span>Network error.</span></div>'; }
+}
+
+document.getElementById('dept-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

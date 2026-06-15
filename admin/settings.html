@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — ALMS Admin</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+</head>
+<body class="film-grain" data-page="settings">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in" style="max-width:800px;margin:0 auto;">
+            <div class="page-header">
+                <h1 class="page-title">System Settings</h1>
+                <p class="page-subtitle">Platform-level configuration and admin account management</p>
+            </div>
+            <div id="flash-global"></div>
+
+            <!-- Admin Password Change -->
+            <div class="dashboard-widget reveal-element" style="margin-bottom:var(--sp-6);">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">Change Admin Password</h3>
+                <div id="pw-flash"></div>
+                <div style="display:flex;flex-direction:column;gap:var(--sp-4);max-width:480px;">
+                    <div class="input-group">
+                        <label for="old-pw">Current Password</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="old-pw" class="input-field">
+                            <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="new-pw">New Password</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="new-pw" class="input-field">
+                            <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                        </div>
+                        <div class="strength-meter" id="pw-strength"><div class="strength-meter-bar"></div><div class="strength-meter-bar"></div><div class="strength-meter-bar"></div><div class="strength-meter-bar"></div></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="confirm-pw">Confirm New Password</label>
+                        <div class="input-password-wrap">
+                            <input type="password" id="confirm-pw" class="input-field">
+                            <button type="button" class="toggle-pw"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="align-self:flex-start;" onclick="changePassword()">Update Password</button>
+                </div>
+            </div>
+
+            <!-- Platform Config -->
+            <div class="dashboard-widget reveal-element" style="margin-bottom:var(--sp-6);">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">Platform Configuration</h3>
+                <div id="config-flash"></div>
+                <div style="display:flex;flex-direction:column;gap:var(--sp-4);max-width:480px;">
+                    <div class="input-group">
+                        <label for="config-institution">Institution Name</label>
+                        <input type="text" id="config-institution" class="input-field" placeholder="Federal College of Animal Health...">
+                    </div>
+                    <div class="input-group">
+                        <label for="config-email">Support Email</label>
+                        <input type="email" id="config-email" class="input-field" placeholder="support@fcahptib.edu.ng">
+                    </div>
+                    <div class="input-group">
+                        <label for="config-max-file">Max Upload Size (MB)</label>
+                        <input type="number" id="config-max-file" class="input-field" value="25" min="1" max="100">
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <input type="checkbox" id="config-registrations" style="accent-color:var(--clr-primary);width:16px;height:16px;" checked>
+                        <label for="config-registrations" style="font-size:0.875rem;cursor:pointer;">Allow new student registrations</label>
+                    </div>
+                    <button class="btn btn-primary" style="align-self:flex-start;" onclick="saveConfig()">Save Settings</button>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="dashboard-widget reveal-element" style="border:1px solid var(--clr-danger);background:rgba(220,38,38,0.04);">
+                <h3 style="font-size:1rem;font-weight:700;color:var(--clr-danger);margin-bottom:var(--sp-4);">⚠️ Danger Zone</h3>
+                <div style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-3);padding:var(--sp-4);background:var(--clr-surface);border-radius:var(--radius-md);">
+                        <div>
+                            <div style="font-weight:600;font-size:0.9375rem;">Clear Activity Logs</div>
+                            <p class="text-muted text-sm" style="margin-bottom:0;">Delete all security audit logs older than 90 days.</p>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" style="border-color:var(--clr-danger);color:var(--clr-danger);" onclick="clearLogs()">Clear Old Logs</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+// Load config on ready
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const res = await fetch('/api/admin-settings.php', { credentials: 'include' });
+        const data = await res.json();
+        if (data.config) {
+            document.getElementById('config-institution').value = data.config.institution_name || '';
+            document.getElementById('config-email').value = data.config.support_email || '';
+            document.getElementById('config-max-file').value = data.config.max_file_size_mb || 25;
+            document.getElementById('config-registrations').checked = data.config.registrations_open !== false;
+        }
+    } catch(e) {}
+});
+
+async function changePassword() {
+    const old = document.getElementById('old-pw').value;
+    const nw  = document.getElementById('new-pw').value;
+    const cf  = document.getElementById('confirm-pw').value;
+    const flash = document.getElementById('pw-flash');
+    if (!old || !nw || !cf) { flash.innerHTML = '<div class="flash-msg error"><span>Please fill in all fields.</span></div>'; return; }
+    if (nw !== cf) { flash.innerHTML = '<div class="flash-msg error"><span>Passwords do not match.</span></div>'; return; }
+    if (nw.length < 8) { flash.innerHTML = '<div class="flash-msg error"><span>Password must be at least 8 characters.</span></div>'; return; }
+    try {
+        const res = await fetch('/api/admin-settings.php', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'change_password', current_password:old, new_password:nw, confirm_password:cf, csrf_token: window.ALMS?.csrfToken||'' }) });
+        const data = await res.json();
+        if (data.success) { flash.innerHTML = '<div class="flash-msg success"><span>Password updated successfully.</span></div>'; ['old-pw','new-pw','confirm-pw'].forEach(id=>document.getElementById(id).value=''); }
+        else flash.innerHTML = `<div class="flash-msg error"><span>${data.message||'Failed.'}</span></div>`;
+    } catch(e) { flash.innerHTML = '<div class="flash-msg error"><span>Network error.</span></div>'; }
+}
+
+async function saveConfig() {
+    const flash = document.getElementById('config-flash');
+    try {
+        const res = await fetch('/api/admin-settings.php', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ action:'save_config', institution_name:document.getElementById('config-institution').value.trim(), support_email:document.getElementById('config-email').value.trim(), max_file_size_mb:parseInt(document.getElementById('config-max-file').value), registrations_open:document.getElementById('config-registrations').checked, csrf_token:window.ALMS?.csrfToken||'' }) });
+        const data = await res.json();
+        if (data.success) flash.innerHTML = '<div class="flash-msg success"><span>Settings saved successfully.</span></div>';
+        else flash.innerHTML = `<div class="flash-msg error"><span>${data.message||'Failed.'}</span></div>`;
+    } catch(e) { flash.innerHTML = '<div class="flash-msg error"><span>Network error.</span></div>'; }
+}
+
+async function clearLogs() {
+    if (!confirm('Delete all activity logs older than 90 days? This cannot be undone.')) return;
+    try {
+        const res = await fetch('/api/admin-settings.php', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'clear_old_logs', csrf_token:window.ALMS?.csrfToken||'' }) });
+        const data = await res.json();
+        document.getElementById('flash-global').innerHTML = data.success ? '<div class="flash-msg success"><span>Old logs cleared.</span></div>' : '<div class="flash-msg error"><span>Failed to clear logs.</span></div>';
+    } catch(e) {}
+}
+
+document.getElementById('new-pw').addEventListener('input', function() {
+    const val=this.value; let s='';
+    if(val.length>=8){let m=0;if(/[a-z]/.test(val))m++;if(/[A-Z]/.test(val))m++;if(/[0-9]/.test(val))m++;if(/[^A-Za-z0-9]/.test(val))m++;if(m===1)s='weak';else if(m===2)s='fair';else if(m===3)s='good';else s='strong';}else if(val.length>0)s='weak';
+    document.getElementById('pw-strength').setAttribute('data-strength',s);
+});
+</script>
+</body>
+</html>

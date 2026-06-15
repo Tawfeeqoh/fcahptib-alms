@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - ALMS</title>
+    <meta name="description" content="Create an ALMS account for FCAH&PT Ibadan.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+</head>
+<body class="alms-static">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./login.html" class="static-brand">
+                <span>ALMS</span>
+                FCAH&PT Ibadan
+            </a>
+            <div class="static-nav-actions">
+                <a href="./login.html" class="btn btn-primary btn-sm">Sign In</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page register">
+        <section class="container static-section" aria-labelledby="register-title">
+            <div class="static-section-head">
+                <p class="static-eyebrow">Institutional Registry</p>
+                <h1 id="register-title">Create your ALMS account</h1>
+                <p class="text-secondary">Student registrations are verified against authorized matriculation records. Lecturer accounts require administrator approval.</p>
+            </div>
+            <div class="auth-panel wide">
+                <div id="register-alert" class="static-alert" hidden></div>
+                <form id="register-form" class="static-register-grid">
+                    <div class="input-group">
+                        <label for="role">Role</label>
+                        <select class="input-field" id="role" name="role" required>
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="first-name">First Name</label>
+                        <input class="input-field" id="first-name" name="first_name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="last-name">Last Name</label>
+                        <input class="input-field" id="last-name" name="last_name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <input class="input-field" id="email" name="email" type="email" required>
+                    </div>
+                    <div class="input-group student-only">
+                        <label for="matric">Matriculation Number</label>
+                        <input class="input-field" id="matric" name="matric_number" placeholder="FCAHPT/2026/0001">
+                    </div>
+                    <div class="input-group">
+                        <label for="department">Department</label>
+                        <select class="input-field" id="department" name="department_id" required></select>
+                    </div>
+                    <div class="input-group student-only">
+                        <label for="level">Study Level</label>
+                        <select class="input-field" id="level" name="level_id">
+                            <option value="1">ND I</option>
+                            <option value="2">ND II</option>
+                            <option value="3">HND I</option>
+                            <option value="4">HND II</option>
+                        </select>
+                    </div>
+                    <div class="input-group lecturer-only" hidden>
+                        <label for="title">Academic Title</label>
+                        <select class="input-field" id="title" name="title">
+                            <option value="Mr.">Mr.</option>
+                            <option value="Mrs.">Mrs.</option>
+                            <option value="Dr.">Dr.</option>
+                            <option value="Engineer">Engineer</option>
+                            <option value="Prof.">Prof.</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input class="input-field" id="password" name="password" type="password" minlength="8" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input class="input-field" id="confirm-password" name="confirm_password" type="password" minlength="8" required>
+                    </div>
+                    <button class="btn btn-primary btn-full static-submit" type="submit">Create Account</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

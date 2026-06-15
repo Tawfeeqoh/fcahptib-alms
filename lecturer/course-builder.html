@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Builder — ALMS</title>
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="lecturer"></script>
+</head>
+<body class="film-grain" data-page="course-builder">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in">
+            
+            <div id="flash-container"></div>
+
+            <!-- Course Selector and Details -->
+            <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom: var(--sp-6); gap:16px;">
+                <div>
+                    <h2 style="font-size:1.5rem; font-weight:700;">Teachable Course Builder</h2>
+                    <p class="text-secondary text-sm">Upload context documents for RAG AI engines and structure adaptive syllabus lessons.</p>
+                </div>
+                
+                <div>
+                    <select id="course-selector" class="input-field" style="width:240px; font-weight:600;" onchange="loadCourseDetails(this.value)">
+                        <option value="">Loading courses...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card-flat text-center py-8" id="locked-view" style="display:none;">
+                <div style="font-size:3rem; margin-bottom:12px;">🔒</div>
+                <h3>Portfolio Locked</h3>
+                <p class="text-secondary">Please select an assigned course or request verification credentials from administrator.</p>
+            </div>
+
+            <div id="builder-view" style="display:none;">
+                <!-- Tabs -->
+                <div class="tabs" style="margin-bottom:var(--sp-4);">
+                    <button class="tab-btn active" id="btn-materials" onclick="switchTab('materials')">
+                        RAG Course Materials (<span id="mat-count">0</span>)
+                    </button>
+                    <button class="tab-btn" id="btn-lessons" onclick="switchTab('lessons')">
+                        Syllabus Lessons (<span id="les-count">0</span>)
+                    </button>
+                </div>
+
+                <!-- ── TAB 1: RAG MATERIALS ── -->
+                <div id="tab-materials" class="tab-content" style="display:grid; grid-template-columns:2fr 1fr; gap:var(--sp-6);">
+                    <!-- Left: Upload List -->
+                    <div class="dashboard-widget" style="overflow-x:auto;">
+                        <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:var(--sp-4);">Indexed Materials</h3>
+                        <div id="materials-list-container">
+                            <p class="text-muted text-sm py-4 text-center">No reference material indexed for AI study tutor. Use form to load syllabus data.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Upload Form -->
+                    <div class="dashboard-widget">
+                        <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:var(--sp-4);">Index Document</h3>
+                        <form id="material-form" style="display:flex; flex-direction:column; gap:16px;">
+                            <div class="input-group">
+                                <label for="mat-title">Document Title</label>
+                                <input type="text" id="mat-title" required placeholder="e.g. Introduction to Binary Search Trees" class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="mat-file">File Upload (.txt / PDF / DOCX)</label>
+                                <input type="file" id="mat-file" class="input-field" style="padding: 10px;">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="mat-text">Direct Text Context</label>
+                                <textarea id="mat-text" placeholder="Copy syllabus definitions or chapter notes directly here..." class="input-field" style="min-height: 120px;"></textarea>
+                            </div>
+
+                            <button type="submit" id="material-submit-btn" class="btn btn-primary btn-full" style="margin-top:10px;">Index Syllabus Material</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ── TAB 2: SYLLABUS LESSONS ── -->
+                <div id="tab-lessons" class="tab-content" style="display:none; grid-template-columns:2fr 1fr; gap:var(--sp-6);">
+                    <!-- Left: Syllabus list -->
+                    <div class="dashboard-widget" style="overflow-x:auto;">
+                        <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:var(--sp-4);">Syllabus Modules</h3>
+                        <div id="lessons-list-container">
+                            <p class="text-muted text-sm py-4 text-center">No syllabus lessons structured yet. Create modules using the form.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Create Lesson Form -->
+                    <div class="dashboard-widget">
+                        <h3 style="font-size:1.125rem; font-weight:700; margin-bottom:var(--sp-4);">Create Syllabus Module</h3>
+                        <form id="lesson-form" style="display:flex; flex-direction:column; gap:16px;">
+                            <div class="input-group">
+                                <label for="les-title">Lesson Title</label>
+                                <input type="text" id="les-title" required placeholder="e.g. Binary Tree Traversals" class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="les-seq">Sequence Order</label>
+                                <input type="number" id="les-seq" value="1" required class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="les-std">📖 Standard Mode Content</label>
+                                <textarea id="les-std" required placeholder="Detailed lecture descriptions..." class="input-field" style="min-height:100px;"></textarea>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="les-exp">⚡ Express Mode Content</label>
+                                <textarea id="les-exp" required placeholder="Bite-sized bullet points and summaries..." class="input-field" style="min-height:80px;"></textarea>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="les-deep">🔬 Deep-Dive Mode Content</label>
+                                <textarea id="les-deep" required placeholder="Granular mathematical context..." class="input-field" style="min-height:100px;"></textarea>
+                            </div>
+
+                            <button type="submit" id="lesson-submit-btn" class="btn btn-primary btn-full" style="margin-top:10px;">Insert Syllabus Module</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let currentCourseId = 0;
+
+document.addEventListener('alms:session-ready', async function() {
+    const params = new URLSearchParams(window.location.search);
+    currentCourseId = parseInt(params.get('course_id') || '0');
+    await loadCoursesList();
+});
+
+async function loadCoursesList() {
+    let url = '/api/lecturer-course-builder.php';
+    if (currentCourseId > 0) {
+        url += `?course_id=${currentCourseId}`;
+    }
+    let data;
+    try {
+        const res = await fetch(url, { credentials: 'include' });
+        data = await res.json();
+    } catch(e) { return; }
+    if (!data.success) return;
+
+    const courses = data.courses || [];
+    const sel = document.getElementById('course-selector');
+    if (courses.length === 0) {
+        sel.innerHTML = '<option value="">No Assigned Courses</option>';
+        document.getElementById('locked-view').style.display = 'block';
+        document.getElementById('builder-view').style.display = 'none';
+        return;
+    }
+
+    sel.innerHTML = courses.map(c => `
+        <option value="${c.id}" ${data.active_course_id == c.id ? 'selected' : ''}>
+            ${escHtml(c.course_code)} — ${escHtml(c.course_name)}
+        </option>
+    `).join('');
+
+    currentCourseId = data.active_course_id;
+
+    if (data.owns_course) {
+        document.getElementById('locked-view').style.display = 'none';
+        document.getElementById('builder-view').style.display = 'block';
+        renderMaterials(data.materials || []);
+        renderLessons(data.lessons || []);
+    } else {
+        document.getElementById('locked-view').style.display = 'block';
+        document.getElementById('builder-view').style.display = 'none';
+    }
+}
+
+async function loadCourseDetails(courseId) {
+    currentCourseId = courseId;
+    // Update URL query param without refreshing
+    const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?course_id=' + courseId;
+    window.history.pushState({path:newurl},'',newurl);
+    await loadCoursesList();
+}
+
+function renderMaterials(list) {
+    document.getElementById('mat-count').textContent = list.length;
+    const container = document.getElementById('materials-list-container');
+    if (list.length === 0) {
+        container.innerHTML = `<p class="text-muted text-sm py-4 text-center">No reference material indexed for AI study tutor. Use form to load syllabus data.</p>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Material Title</th>
+                    <th>File References</th>
+                    <th>Indexed Time</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${list.map(mat => `
+                    <tr>
+                        <td><strong>${escHtml(mat.title)}</strong></td>
+                        <td class="font-mono-data text-muted text-xs">${escHtml(mat.file_path)}</td>
+                        <td class="font-mono-data text-muted" data-date="${escHtml(mat.uploaded_at)}" data-date-style="datetime"></td>
+                        <td style="text-align:right;">
+                            <button class="btn btn-danger btn-sm" onclick="deleteMaterial(${mat.id})">Remove</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+}
+
+function renderLessons(list) {
+    document.getElementById('les-count').textContent = list.length;
+    const container = document.getElementById('lessons-list-container');
+    if (list.length === 0) {
+        container.innerHTML = `<p class="text-muted text-sm py-4 text-center">No syllabus lessons structured yet. Create modules using the form.</p>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sequence</th>
+                    <th>Module Title</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${list.map(les => `
+                    <tr>
+                        <td class="font-mono-data text-muted">Module #${les.sequence_order}</td>
+                        <td><strong>${escHtml(les.title)}</strong></td>
+                        <td style="text-align:right;">
+                            <button class="btn btn-danger btn-sm" onclick="deleteLesson(${les.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + tab).classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById('tab-' + tab).style.display = 'grid';
+}
+
+// Form submits
+document.getElementById('material-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('material-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+
+    const flash = document.getElementById('flash-container');
+    flash.innerHTML = '';
+
+    const formData = new FormData();
+    formData.append('action', 'upload_material');
+    formData.append('course_id', currentCourseId);
+    formData.append('title', document.getElementById('mat-title').value.trim());
+    formData.append('content_text', document.getElementById('mat-text').value.trim());
+    formData.append('csrf_token', window.ALMS?.csrfToken || '');
+
+    const fileInput = document.getElementById('mat-file');
+    if (fileInput.files.length > 0) {
+        formData.append('material_file', fileInput.files[0]);
+    }
+
+    try {
+        const res = await fetch('/api/lecturer-course-builder.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+            flash.innerHTML = `<div class="flash-msg success">RAG material uploaded and keyword context indexed.</div>`;
+            document.getElementById('material-form').reset();
+            await loadCoursesList();
+        } else {
+            flash.innerHTML = `<div class="flash-msg error">${escHtml(data.message || 'Upload failed.')}</div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = `<div class="flash-msg error">Network error uploading material.</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Index Syllabus Material';
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+});
+
+document.getElementById('lesson-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('lesson-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Inserting...';
+
+    const flash = document.getElementById('flash-container');
+    flash.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/lecturer-course-builder.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            body: JSON.stringify({
+                action: 'add_lesson',
+                course_id: currentCourseId,
+                title: document.getElementById('les-title').value.trim(),
+                sequence_order: document.getElementById('les-seq').value,
+                content_standard: document.getElementById('les-std').value.trim(),
+                content_express: document.getElementById('les-exp').value.trim(),
+                content_deep: document.getElementById('les-deep').value.trim()
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            flash.innerHTML = `<div class="flash-msg success">Lesson added to course modules successfully.</div>`;
+            document.getElementById('lesson-form').reset();
+            document.getElementById('les-seq').value = 1;
+            await loadCoursesList();
+        } else {
+            flash.innerHTML = `<div class="flash-msg error">${escHtml(data.message || 'Insertion failed.')}</div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = `<div class="flash-msg error">Network error creating module.</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Insert Syllabus Module';
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+});
+
+async function deleteMaterial(id) {
+    if (!confirm('Remove material context from RAG memory?')) return;
+    const flash = document.getElementById('flash-container');
+    flash.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/lecturer-course-builder.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            body: JSON.stringify({
+                action: 'delete_material',
+                course_id: currentCourseId,
+                material_id: id
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            flash.innerHTML = `<div class="flash-msg info">Material deleted from RAG memory bank.</div>`;
+            await loadCoursesList();
+        } else {
+            alert(data.message || 'Error deleting material');
+        }
+    } catch(err) {
+        alert('Network error deleting material.');
+    } finally {
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+}
+
+async function deleteLesson(id) {
+    if (!confirm('Delete this lesson module? (Will break student tracking progress)')) return;
+    const flash = document.getElementById('flash-container');
+    flash.innerHTML = '';
+
+    try {
+        const res = await fetch('/api/lecturer-course-builder.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': window.ALMS?.csrfToken || ''
+            },
+            body: JSON.stringify({
+                action: 'delete_lesson',
+                course_id: currentCourseId,
+                lesson_id: id
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            flash.innerHTML = `<div class="flash-msg info">Lesson module deleted from syllabus.</div>`;
+            await loadCoursesList();
+        } else {
+            alert(data.message || 'Error deleting lesson module');
+        }
+    } catch(err) {
+        alert('Network error deleting lesson module.');
+    } finally {
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

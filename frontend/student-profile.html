@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings - ALMS</title>
+    <meta name="description" content="Student profile settings and study preferences for ALMS.">
+    <link rel="stylesheet" href="./globals.css">
+    <link rel="stylesheet" href="./components.css">
+    <link rel="stylesheet" href="./layout.css">
+    <style>
+        .settings-panel {
+            background: white;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-sm);
+            padding: 28px;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .settings-grid-single {
+            grid-column: 1 / -1;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 14px 16px;
+            background: var(--clr-surface);
+            color: var(--clr-text);
+            font: inherit;
+        }
+        .field-readonly {
+            background: var(--clr-bg);
+            cursor: not-allowed;
+            color: var(--clr-text-secondary);
+        }
+        @media (max-width: 820px) {
+            .settings-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="alms-static" data-page="student-profile">
+    <header class="public-header">
+        <div class="container static-nav">
+            <a href="./student-profile.html" class="static-brand">
+                <span>ALMS</span>
+                Profile
+            </a>
+            <div class="static-nav-actions">
+                <a href="#" data-backend-link="/auth.php?action=logout" class="btn btn-outline btn-sm">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="static-auth-page" style="padding-top: 100px; padding-bottom: 80px;">
+        <section class="container">
+            <div style="margin-bottom: 30px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:14px; align-items:center;">
+                <div>
+                    <p class="static-eyebrow">Account Preferences</p>
+                    <h1 style="margin:0;">Profile Settings</h1>
+                    <p class="text-secondary" style="max-width:620px; margin-top:12px;">Update your name, learning preferences, and curriculum pace for ALMS.</p>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <a href="./student-dashboard.html" class="btn btn-outline">Dashboard</a>
+                    <a href="./student-courses.html" class="btn btn-outline">Courses</a>
+                    <a href="./student-recommendations.html" class="btn btn-primary">Recommendations</a>
+                </div>
+            </div>
+
+            <div id="profile-alert" class="static-alert" hidden></div>
+
+            <div class="settings-panel">
+                <form id="profile-form">
+                    <div class="settings-grid">
+                        <div class="input-group">
+                            <label for="profile-first-name">First Name</label>
+                            <input id="profile-first-name" name="first_name" type="text" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="profile-last-name">Last Name</label>
+                            <input id="profile-last-name" name="last_name" type="text" required>
+                        </div>
+                        <div class="input-group settings-grid-single">
+                            <label for="profile-email">Academic Email</label>
+                            <input id="profile-email" type="email" readonly class="field-readonly">
+                        </div>
+                        <div class="input-group">
+                            <label for="profile-matric">Matric Number</label>
+                            <input id="profile-matric" type="text" readonly class="field-readonly">
+                        </div>
+                        <div class="input-group">
+                            <label for="profile-level">Current Level</label>
+                            <input id="profile-level" type="text" readonly class="field-readonly">
+                        </div>
+                        <div class="input-group settings-grid-single">
+                            <label for="profile-department">Assigned Department</label>
+                            <input id="profile-department" type="text" readonly class="field-readonly">
+                        </div>
+                        <div class="input-group">
+                            <label for="profile-vark">VARK Study Preference</label>
+                            <select id="profile-vark" name="vark_style" required>
+                                <option value="v">Visual</option>
+                                <option value="a">Auditory</option>
+                                <option value="r">Reading/Writing</option>
+                                <option value="k">Kinesthetic</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="profile-pace">Curriculum Pace</label>
+                            <select id="profile-pace" name="current_pace" required>
+                                <option value="express">⚡ Express Mode</option>
+                                <option value="standard">📖 Standard Mode</option>
+                                <option value="deep">🔬 Deep-Dive Mode</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 24px; text-align:right;">
+                        <button type="submit" class="btn btn-primary btn-full">Save Profile</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script src="./static-frontend.js"></script>
+</body>
+</html>

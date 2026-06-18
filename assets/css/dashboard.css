@@ -106,9 +106,9 @@
   color: #333333;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: var(--sp-4) var(--sp-4) var(--sp-2);
-  white-space: nowrap;
-  overflow: hidden;
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-2);
+  padding: 0 var(--sp-4);
 }
 
 .sidebar-footer {

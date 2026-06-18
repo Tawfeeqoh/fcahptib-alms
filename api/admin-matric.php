@@ -98,8 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $level  = trim($body['level']  ?? '');
         $dept   = trim($body['department'] ?? '') ?: null;
 
-        if (empty($matric) || !in_array($level, $VALID_LEVELS, true)) {
-            apiJson(['success' => false, 'message' => 'Matric number and valid level are required.'], 422);
+        if (empty($matric) || !in_array($level, $VALID_LEVELS, true) || empty($dept)) {
+            apiJson(['success' => false, 'message' => 'Matric number, level, and department are required.'], 422);
         }
         if (!preg_match('/^[A-Z0-9\/\-\.]+$/', $matric)) {
             apiJson(['success' => false, 'message' => 'Invalid matric number format.'], 422);
@@ -159,8 +159,8 @@ function handleCsvUpload(PDO $db, int $adminId, array $validLevels): void {
     $level = trim($_POST['level'] ?? '');
     $dept  = trim($_POST['department'] ?? '') ?: null;
 
-    if (!in_array($level, $validLevels, true)) {
-        apiJson(['success' => false, 'message' => 'Select a valid level for this CSV upload.'], 422);
+    if (!in_array($level, $validLevels, true) || empty($dept)) {
+        apiJson(['success' => false, 'message' => 'Select a valid level and department for this CSV upload.'], 422);
     }
 
     $file = $_FILES['csv_file'];

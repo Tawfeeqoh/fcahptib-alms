@@ -160,8 +160,10 @@
                                 </select>
                             </div>
                             <div class="input-group" style="margin:0;">
-                                <label for="csv-dept-input">Department <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
-                                <input type="text" id="csv-dept-input" class="input-field" placeholder="e.g. Animal Health">
+                                <label for="csv-dept-input">Department</label>
+                                <select id="csv-dept-input" class="input-field">
+                                    <option value="">Select Department</option>
+                                </select>
                             </div>
                         </div>
 
@@ -206,8 +208,10 @@
                                 </select>
                             </div>
                             <div class="input-group" style="margin:0;">
-                                <label for="manual-dept">Department <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
-                                <input type="text" id="manual-dept" class="input-field" placeholder="e.g. Animal Health">
+                                <label for="manual-dept">Department</label>
+                                <select id="manual-dept" class="input-field">
+                                    <option value="">Select Department</option>
+                                </select>
                             </div>
                             <button class="btn btn-primary" id="btn-add-manual">
                                 <i class="fa-solid fa-plus"></i> Add Matric Number
@@ -282,12 +286,36 @@ let searchQuery  = '';
 let debounceTimer;
 
 document.addEventListener('alms:session-ready', async function() {
-    // Fetch CSRF
+    // Fetch CSRF and Bootstrap data
     try {
-        const r = await fetch('/api/session.php', { credentials: 'include' });
-        const d = await r.json();
-        csrfToken = d.csrf_token || '';
-    } catch(e) {}
+        const [sessionRes, bootstrapRes] = await Promise.all([
+            fetch('/api/session.php', { credentials: 'include' }),
+            fetch('/api/bootstrap.php', { credentials: 'include' })
+        ]);
+        const sessionData = await sessionRes.json();
+        const bootstrapData = await bootstrapRes.json();
+        
+        csrfToken = sessionData.csrf_token || '';
+        
+        // Populate departments dropdowns
+        if (bootstrapData.departments) {
+            const deptSelectManual = document.getElementById('manual-dept');
+            const deptSelectCsv = document.getElementById('csv-dept-input');
+            bootstrapData.departments.forEach(dept => {
+                const opt1 = document.createElement('option');
+                opt1.value = dept.name; // Using name as the backend expects department name string
+                opt1.textContent = dept.name;
+                deptSelectManual.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = dept.name;
+                opt2.textContent = dept.name;
+                deptSelectCsv.appendChild(opt2);
+            });
+        }
+    } catch(e) {
+        console.error('Failed to initialize page data:', e);
+    }
 
     await loadList();
 
@@ -440,8 +468,8 @@ async function addManual() {
     const dept   = document.getElementById('manual-dept').value.trim();
     const result = document.getElementById('manual-result');
 
-    if (!matric || !level) {
-        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Matric number and level are required.</span></div>';
+    if (!matric || !level || !dept) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Matric number, level, and department are required.</span></div>';
         return;
     }
     try {
@@ -471,8 +499,8 @@ async function uploadCsv() {
     const progress = document.getElementById('upload-progress');
     const bar      = document.getElementById('upload-progress-bar');
 
-    if (!level) {
-        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Please select a level for this upload.</span></div>';
+    if (!level || !dept) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Please select both a level and a department for this upload.</span></div>';
         return;
     }
     if (!fileInp.files[0]) {

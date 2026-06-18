@@ -107,15 +107,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             $stmt = $db->prepare(
-                'INSERT IGNORE INTO authorized_matric_numbers (matric_number, level, department) VALUES (?, ?, ?)'
+                'INSERT INTO authorized_matric_numbers (matric_number, level, department) VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE level = VALUES(level), department = VALUES(department)'
             );
             $stmt->execute([$matric, $level, $dept]);
-            if ($stmt->rowCount() > 0) {
-                logActivity($adminId, 'matric_add', "Added matric: $matric ($level)");
-                apiJson(['success' => true, 'message' => "Matric number $matric added.", 'id' => (int)$db->lastInsertId()]);
-            } else {
-                apiJson(['success' => false, 'message' => 'That matric number already exists.'], 409);
-            }
+            
+            // rowCount is 1 for insert, 2 for update, 0 if nothing changed.
+            logActivity($adminId, 'matric_add_merge', "Added/Updated matric: $matric ($level)");
+            apiJson(['success' => true, 'message' => "Matric number $matric has been successfully added/updated."]);
+            
         } catch (Throwable $e) {
             error_log('admin-matric add_single: ' . $e->getMessage());
             apiJson(['success' => false, 'message' => 'Failed to add matric number.'], 500);
@@ -180,8 +180,9 @@ function handleCsvUpload(PDO $db, int $adminId, array $validLevels): void {
         apiJson(['success' => false, 'message' => 'Could not read uploaded file.'], 500);
     }
 
-    $inserted = 0; $skipped = 0; $invalid = 0;
-    $stmt = $db->prepare('INSERT IGNORE INTO authorized_matric_numbers (matric_number, level, department) VALUES (?, ?, ?)');
+    $inserted = 0; $updated = 0; $skipped = 0; $invalid = 0;
+    $stmt = $db->prepare('INSERT INTO authorized_matric_numbers (matric_number, level, department) VALUES (?, ?, ?)
+                          ON DUPLICATE KEY UPDATE level = VALUES(level), department = VALUES(department)');
 
     // Skip header row if it contains non-matric text
     $firstLine = true;
@@ -200,18 +201,20 @@ function handleCsvUpload(PDO $db, int $adminId, array $validLevels): void {
 
         try {
             $stmt->execute([$matric, $level, $dept]);
-            if ($stmt->rowCount() > 0) $inserted++;
-            else $skipped++;
+            $count = $stmt->rowCount();
+            if ($count === 1) $inserted++;
+            elseif ($count === 2) $updated++;
+            else $skipped++; // rowCount() == 0 means unchanged
         } catch (Throwable $e) {
             $skipped++;
         }
     }
     fclose($handle);
 
-    logActivity($adminId, 'matric_csv_upload', "CSV upload: $inserted inserted, $skipped skipped for $level");
+    logActivity($adminId, 'matric_csv_upload', "CSV upload: $inserted inserted, $updated updated, $skipped skipped for $level");
     apiJson([
         'success'  => true,
-        'message'  => "Upload complete: $inserted added, $skipped duplicates/skipped, $invalid invalid.",
+        'message'  => "Upload complete: $inserted added, $updated updated, $skipped skipped, $invalid invalid.",
         'inserted' => $inserted,
         'skipped'  => $skipped,
         'invalid'  => $invalid,

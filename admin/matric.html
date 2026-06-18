@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matric Numbers — ALMS Admin</title>
+    <meta name="description" content="Manage authorized student matric numbers — ALMS Admin">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+    <style>
+        .level-tab {
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--clr-border-light);
+            background: transparent;
+            color: var(--clr-text-secondary);
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .level-tab:hover { background: var(--clr-bg); }
+        .level-tab.active { background: var(--clr-primary); color: #fff; border-color: var(--clr-primary); }
+
+        .upload-zone {
+            border: 2px dashed var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--clr-bg);
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--clr-primary);
+            background: rgba(209,0,0,0.03);
+        }
+        .upload-zone input[type="file"] { display: none; }
+
+        .matric-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--clr-border-light);
+            transition: background 0.12s;
+        }
+        .matric-row:last-child { border-bottom: none; }
+        .matric-row:hover { background: var(--clr-bg); }
+        .matric-code {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .search-input {
+            padding: 8px 12px 8px 36px;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-sm);
+            background: var(--clr-surface);
+            font-size: 0.875rem;
+            font-family: var(--font-body);
+            color: var(--clr-text);
+            min-width: 0;
+            flex: 1;
+            max-width: 280px;
+        }
+        .search-input:focus { outline: 2px solid var(--clr-primary); }
+        .search-wrap { position: relative; }
+        .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--clr-text-muted); font-size: 0.8125rem; }
+
+        .progress-upload {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--clr-border-light);
+            overflow: hidden;
+            margin-top: 8px;
+            display: none;
+        }
+        .progress-upload-bar {
+            height: 100%;
+            background: var(--clr-primary);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive stack on mobile */
+        @media (max-width: 640px) {
+            .top-action-bar { flex-direction: column; align-items: stretch; }
+            .search-input { max-width: 100%; }
+        }
+    </style>
+</head>
+<body class="film-grain" data-page="matric">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+
+        <div class="page-content animate-fade-in" id="page-body">
+
+            <!-- Page Header -->
+            <div class="page-header" style="margin-bottom:var(--sp-6);">
+                <h1 class="page-title">Authorized Matric Numbers</h1>
+                <p class="page-subtitle">Upload student matric numbers by level. Only listed matric numbers can register.</p>
+            </div>
+
+            <!-- Summary Stat Pills -->
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:var(--sp-6);" id="summary-pills">
+                <div class="animate-shimmer" style="width:100px;height:56px;border-radius:var(--radius-md);"></div>
+                <div class="animate-shimmer" style="width:100px;height:56px;border-radius:var(--radius-md);"></div>
+                <div class="animate-shimmer" style="width:100px;height:56px;border-radius:var(--radius-md);"></div>
+                <div class="animate-shimmer" style="width:100px;height:56px;border-radius:var(--radius-md);"></div>
+            </div>
+
+            <!-- Two-column layout on desktop -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;" class="responsive-grid-2">
+
+                <!-- ── LEFT: Upload + Manual Add ── -->
+                <div style="display:flex;flex-direction:column;gap:20px;">
+
+                    <!-- CSV Upload Card -->
+                    <div class="dashboard-widget reveal-element">
+                        <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">
+                            <i class="fa-solid fa-file-csv" style="color:var(--clr-primary);margin-right:8px;"></i>
+                            Upload CSV / Spreadsheet
+                        </h3>
+
+                        <p class="text-secondary" style="font-size:0.8125rem;margin-bottom:var(--sp-4);line-height:1.6;">
+                            Upload a <strong>.csv</strong> file where <strong>column A</strong> contains matric numbers (one per row).
+                            Supports exports from Excel, Google Sheets, or any spreadsheet app.
+                        </p>
+
+                        <!-- Download template link -->
+                        <a href="#" id="download-template"
+                           style="display:inline-flex;align-items:center;gap:6px;font-size:0.8125rem;color:var(--clr-primary);font-weight:600;text-decoration:none;margin-bottom:var(--sp-4);">
+                            <i class="fa-solid fa-download"></i> Download CSV Template
+                        </a>
+
+                        <div style="display:flex;flex-direction:column;gap:var(--sp-3);margin-bottom:var(--sp-4);">
+                            <div class="input-group" style="margin:0;">
+                                <label for="csv-level-select">Level for this upload</label>
+                                <select id="csv-level-select" class="input-field">
+                                    <option value="">Select Level</option>
+                                    <option value="ND I">ND I</option>
+                                    <option value="ND II">ND II</option>
+                                    <option value="HND I">HND I</option>
+                                    <option value="HND II">HND II</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="margin:0;">
+                                <label for="csv-dept-input">Department <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
+                                <input type="text" id="csv-dept-input" class="input-field" placeholder="e.g. Animal Health">
+                            </div>
+                        </div>
+
+                        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('csv-file-input').click()">
+                            <input type="file" id="csv-file-input" accept=".csv,.txt">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem;color:var(--clr-primary);margin-bottom:12px;display:block;"></i>
+                            <div style="font-weight:700;font-size:0.9375rem;margin-bottom:4px;">Drop CSV file here or click to browse</div>
+                            <div style="font-size:0.8125rem;color:var(--clr-text-muted);" id="file-name-label">No file selected · Max 2MB</div>
+                        </div>
+                        <div class="progress-upload" id="upload-progress">
+                            <div class="progress-upload-bar" id="upload-progress-bar"></div>
+                        </div>
+
+                        <button class="btn btn-primary" id="btn-upload-csv" style="width:100%;margin-top:var(--sp-4);" disabled>
+                            <i class="fa-solid fa-upload"></i> Upload Matric Numbers
+                        </button>
+                        <div id="upload-result" style="margin-top:var(--sp-3);"></div>
+                    </div>
+
+                    <!-- Manual Add Card -->
+                    <div class="dashboard-widget reveal-element">
+                        <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">
+                            <i class="fa-solid fa-keyboard" style="color:var(--clr-primary);margin-right:8px;"></i>
+                            Add Manually
+                        </h3>
+                        <div style="display:flex;flex-direction:column;gap:var(--sp-3);">
+                            <div class="input-group" style="margin:0;">
+                                <label for="manual-matric">Matric Number</label>
+                                <input type="text" id="manual-matric" class="input-field"
+                                    placeholder="e.g. NDAH/24/001"
+                                    style="font-family:var(--font-mono);letter-spacing:0.04em;"
+                                    autocomplete="off">
+                            </div>
+                            <div class="input-group" style="margin:0;">
+                                <label for="manual-level">Level</label>
+                                <select id="manual-level" class="input-field">
+                                    <option value="">Select Level</option>
+                                    <option value="ND I">ND I</option>
+                                    <option value="ND II">ND II</option>
+                                    <option value="HND I">HND I</option>
+                                    <option value="HND II">HND II</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="margin:0;">
+                                <label for="manual-dept">Department <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
+                                <input type="text" id="manual-dept" class="input-field" placeholder="e.g. Animal Health">
+                            </div>
+                            <button class="btn btn-primary" id="btn-add-manual">
+                                <i class="fa-solid fa-plus"></i> Add Matric Number
+                            </button>
+                        </div>
+                        <div id="manual-result" style="margin-top:var(--sp-3);"></div>
+                    </div>
+                </div>
+
+                <!-- ── RIGHT: Matric Number List ── -->
+                <div class="dashboard-widget reveal-element" style="padding:0;overflow:hidden;">
+                    <!-- Toolbar -->
+                    <div style="padding:16px 20px;border-bottom:1px solid var(--clr-border-light);">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="level-tabs">
+                            <button class="level-tab active" data-level="">All Levels</button>
+                            <button class="level-tab" data-level="ND I">ND I</button>
+                            <button class="level-tab" data-level="ND II">ND II</button>
+                            <button class="level-tab" data-level="HND I">HND I</button>
+                            <button class="level-tab" data-level="HND II">HND II</button>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;" class="top-action-bar">
+                            <div class="search-wrap" style="flex:1;min-width:160px;">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" id="search-input" class="search-input" placeholder="Search matric no.">
+                            </div>
+                            <button class="btn btn-ghost btn-sm" id="btn-clear-level" style="color:var(--clr-danger);" disabled>
+                                <i class="fa-solid fa-trash"></i> Clear Level
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List -->
+                    <div id="matric-list" style="min-height:200px;max-height:560px;overflow-y:auto;">
+                        <div style="padding:20px;">
+                            <div class="animate-shimmer" style="height:40px;border-radius:var(--radius-sm);margin-bottom:8px;"></div>
+                            <div class="animate-shimmer" style="height:40px;border-radius:var(--radius-sm);margin-bottom:8px;"></div>
+                            <div class="animate-shimmer" style="height:40px;border-radius:var(--radius-sm);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--clr-border-light);flex-wrap:wrap;gap:8px;">
+                        <span id="list-info" style="font-size:0.8125rem;color:var(--clr-text-muted);"></span>
+                        <div style="display:flex;gap:8px;">
+                            <button id="btn-prev" class="btn btn-ghost btn-sm" disabled>
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button id="btn-next" class="btn btn-ghost btn-sm" disabled>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:var(--radius-md);
+    display:none;align-items:center;gap:10px;font-size:0.875rem;font-weight:600;z-index:9999;box-shadow:var(--shadow-lg);">
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+let csrfToken = '';
+let currentLevel = '';
+let currentPage  = 1;
+let searchQuery  = '';
+let debounceTimer;
+
+document.addEventListener('alms:session-ready', async function() {
+    // Fetch CSRF
+    try {
+        const r = await fetch('/api/session.php', { credentials: 'include' });
+        const d = await r.json();
+        csrfToken = d.csrf_token || '';
+    } catch(e) {}
+
+    await loadList();
+
+    // Level tabs
+    document.querySelectorAll('.level-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentLevel = this.dataset.level;
+            currentPage  = 1;
+            document.getElementById('btn-clear-level').disabled = !currentLevel;
+            loadList();
+        });
+    });
+
+    // Search
+    document.getElementById('search-input').addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            searchQuery = this.value.trim();
+            currentPage = 1;
+            loadList();
+        }, 350);
+    });
+
+    // Pagination
+    document.getElementById('btn-prev').addEventListener('click', () => { currentPage--; loadList(); });
+    document.getElementById('btn-next').addEventListener('click', () => { currentPage++; loadList(); });
+
+    // Clear level
+    document.getElementById('btn-clear-level').addEventListener('click', async function() {
+        if (!currentLevel) return;
+        if (!confirm(`Delete ALL matric numbers for ${currentLevel}? This cannot be undone.`)) return;
+        try {
+            const res  = await fetch('/api/admin-matric.php', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete_level', level: currentLevel, csrf_token: csrfToken }),
+            });
+            const data = await res.json();
+            if (data.success) { showToast(data.message, 'success'); loadList(); }
+            else               showToast(data.message || 'Error', 'error');
+        } catch(e) { showToast('Network error.', 'error'); }
+    });
+
+    // Manual add
+    document.getElementById('btn-add-manual').addEventListener('click', addManual);
+    document.getElementById('manual-matric').addEventListener('keydown', e => { if (e.key === 'Enter') addManual(); });
+
+    // CSV file input
+    const fileInput = document.getElementById('csv-file-input');
+    fileInput.addEventListener('change', function() {
+        if (this.files[0]) {
+            document.getElementById('file-name-label').textContent = this.files[0].name;
+            document.getElementById('btn-upload-csv').disabled = false;
+        }
+    });
+
+    // Drag & drop
+    const zone = document.getElementById('upload-zone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            fileInput.files = e.dataTransfer.files;
+            document.getElementById('file-name-label').textContent = file.name;
+            document.getElementById('btn-upload-csv').disabled = false;
+        }
+    });
+
+    // CSV upload button
+    document.getElementById('btn-upload-csv').addEventListener('click', uploadCsv);
+
+    // Download template
+    document.getElementById('download-template').addEventListener('click', function(e) {
+        e.preventDefault();
+        const csv  = 'matric_number\nNDAH/24/001\nNDAH/24/002\nNDAH/24/003\n';
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = 'matric_template.csv'; a.click();
+        URL.revokeObjectURL(url);
+    });
+});
+
+async function loadList() {
+    const matricList = document.getElementById('matric-list');
+    matricList.innerHTML = '<div style="padding:20px;"><div class="animate-shimmer" style="height:40px;border-radius:var(--radius-sm);margin-bottom:8px;"></div><div class="animate-shimmer" style="height:40px;border-radius:var(--radius-sm);"></div></div>';
+
+    const params = new URLSearchParams({ page: currentPage });
+    if (currentLevel) params.set('level', currentLevel);
+    if (searchQuery)  params.set('search', searchQuery);
+
+    try {
+        const res  = await fetch('/api/admin-matric.php?' + params, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success) { matricList.innerHTML = `<div class="empty-state" style="padding:32px;"><p class="text-muted">${escHtml(data.message)}</p></div>`; return; }
+
+        // Summary pills
+        renderSummary(data.summary || []);
+
+        // Pagination info
+        const start = (currentPage - 1) * 50 + 1;
+        const end   = Math.min(currentPage * 50, data.total);
+        document.getElementById('list-info').textContent = data.total > 0 ? `${start}–${end} of ${data.total}` : 'No records';
+        document.getElementById('btn-prev').disabled = currentPage <= 1;
+        document.getElementById('btn-next').disabled = currentPage >= data.pages;
+
+        if (data.data.length === 0) {
+            matricList.innerHTML = `<div class="empty-state" style="padding:48px 24px;">
+                <div class="empty-state-icon"><i class="fa-solid fa-id-card" style="font-size:2rem;color:var(--clr-text-muted);"></i></div>
+                <p class="text-muted text-sm">No matric numbers yet for ${currentLevel || 'any level'}.</p>
+                <p class="text-muted text-sm">Upload a CSV or add one manually.</p>
+            </div>`;
+            return;
+        }
+
+        matricList.innerHTML = data.data.map(row => `
+            <div class="matric-row" data-id="${row.id}">
+                <div class="matric-code">${escHtml(row.matric_number)}</div>
+                <span class="badge badge-neutral" style="font-size:0.6875rem;">${escHtml(row.level)}</span>
+                ${row.department ? `<span style="font-size:0.75rem;color:var(--clr-text-muted);">${escHtml(row.department)}</span>` : ''}
+                <button class="btn btn-ghost btn-sm" onclick="deleteMatric(${row.id}, this)" style="margin-left:auto;color:var(--clr-danger);padding:4px 8px;" title="Remove">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+    } catch(e) {
+        matricList.innerHTML = '<div class="empty-state" style="padding:32px;"><p class="text-muted">Failed to load. Check your connection.</p></div>';
+    }
+}
+
+function renderSummary(summary) {
+    const levels = ['ND I','ND II','HND I','HND II'];
+    const counts = {};
+    summary.forEach(s => { counts[s.level] = s.cnt; });
+    document.getElementById('summary-pills').innerHTML = levels.map(lv => `
+        <div style="padding:12px 20px;border-radius:var(--radius-md);background:var(--clr-surface);border:1px solid var(--clr-border-light);text-align:center;min-width:80px;">
+            <div style="font-size:1.375rem;font-weight:800;font-family:var(--font-mono);color:var(--clr-primary);">${counts[lv] || 0}</div>
+            <div style="font-size:0.6875rem;font-weight:700;color:var(--clr-text-muted);text-transform:uppercase;letter-spacing:0.06em;">${lv}</div>
+        </div>
+    `).join('');
+}
+
+async function addManual() {
+    const matric = document.getElementById('manual-matric').value.trim().toUpperCase();
+    const level  = document.getElementById('manual-level').value;
+    const dept   = document.getElementById('manual-dept').value.trim();
+    const result = document.getElementById('manual-result');
+
+    if (!matric || !level) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Matric number and level are required.</span></div>';
+        return;
+    }
+    try {
+        const res  = await fetch('/api/admin-matric.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add_single', matric_number: matric, level, department: dept, csrf_token: csrfToken }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            result.innerHTML = `<div class="flash-msg success"><i class="fa-solid fa-circle-check"></i><span>${escHtml(data.message)}</span></div>`;
+            document.getElementById('manual-matric').value = '';
+            loadList();
+        } else {
+            result.innerHTML = `<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>${escHtml(data.message)}</span></div>`;
+        }
+    } catch(e) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-wifi"></i><span>Network error.</span></div>';
+    }
+}
+
+async function uploadCsv() {
+    const level    = document.getElementById('csv-level-select').value;
+    const dept     = document.getElementById('csv-dept-input').value.trim();
+    const fileInp  = document.getElementById('csv-file-input');
+    const result   = document.getElementById('upload-result');
+    const progress = document.getElementById('upload-progress');
+    const bar      = document.getElementById('upload-progress-bar');
+
+    if (!level) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Please select a level for this upload.</span></div>';
+        return;
+    }
+    if (!fileInp.files[0]) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>Please select a CSV file.</span></div>';
+        return;
+    }
+
+    const btn = document.getElementById('btn-upload-csv');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+    progress.style.display = 'block';
+    bar.style.width = '30%';
+
+    const fd = new FormData();
+    fd.append('csv_file',   fileInp.files[0]);
+    fd.append('level',      level);
+    fd.append('department', dept);
+    fd.append('csrf_token', csrfToken);
+
+    try {
+        bar.style.width = '70%';
+        const res  = await fetch('/api/admin-matric.php', { method: 'POST', credentials: 'include', body: fd });
+        const data = await res.json();
+        bar.style.width = '100%';
+        setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 600);
+
+        if (data.success) {
+            result.innerHTML = `<div class="flash-msg success"><i class="fa-solid fa-circle-check"></i><span>${escHtml(data.message)}</span></div>`;
+            fileInp.value = '';
+            document.getElementById('file-name-label').textContent = 'No file selected · Max 2MB';
+            loadList();
+        } else {
+            result.innerHTML = `<div class="flash-msg error"><i class="fa-solid fa-triangle-exclamation"></i><span>${escHtml(data.message)}</span></div>`;
+        }
+    } catch(e) {
+        result.innerHTML = '<div class="flash-msg error"><i class="fa-solid fa-wifi"></i><span>Upload failed. Check connection.</span></div>';
+        progress.style.display = 'none';
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Matric Numbers';
+}
+
+async function deleteMatric(id, btn) {
+    if (!confirm('Remove this matric number?')) return;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btn.disabled  = true;
+    try {
+        const res  = await fetch('/api/admin-matric.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id, csrf_token: csrfToken }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            const row = btn.closest('.matric-row');
+            row.style.transition = 'opacity 0.2s'; row.style.opacity = '0';
+            setTimeout(() => { row.remove(); loadList(); }, 200);
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-times"></i>';
+            btn.disabled  = false;
+            showToast(data.message || 'Error deleting.', 'error');
+        }
+    } catch(e) { btn.innerHTML = '<i class="fa-solid fa-times"></i>'; btn.disabled = false; }
+}
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.style.background = type === 'success' ? 'var(--clr-success)' : 'var(--clr-danger)';
+    t.style.color = '#fff';
+    t.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${escHtml(msg)}`;
+    t.style.display = 'flex';
+    clearTimeout(window._toast);
+    window._toast = setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+
+<style>
+@media (max-width: 768px) {
+    .responsive-grid-2 { grid-template-columns: 1fr !important; }
+}
+</style>
+</body>
+</html>

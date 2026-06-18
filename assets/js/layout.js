@@ -22,13 +22,15 @@
         { page: 'assignments',     href: '/student/assignments.html',      icon: iconClipboard(),      label: 'Assignments' },
         { page: 'quizzes',         href: '/student/quiz.html',             icon: iconQuiz(),           label: 'Quizzes' },
         { page: 'gradebook',       href: '/student/gradebook.html',        icon: iconChart(),          label: 'Gradebook' },
+        { page: 'timetable',       href: '/student/timetable.html',        icon: iconCalendar(),       label: 'Timetable' },
+        { page: 'notifications',   href: '/student/notifications.html',    icon: iconBell(),           label: 'Notifications', badge: true },
         { page: 'recommendations', href: '/student/recommendations.html',  icon: iconLightning(),      label: 'Recommendations' },
         { page: 'achievements',    href: '/student/achievements.html',     icon: iconTrophy(),         label: 'Achievements' },
     ];
 
     const STUDENT_ACCOUNT_NAV = [
         { page: 'profile',  href: '/student/profile.html', icon: iconUser(), label: 'My Profile' },
-        { page: 'signout',  href: '/auth.php?action=logout', icon: iconLogout(), label: 'Sign Out' },
+        { page: 'signout',  href: '/api/auth.php?action=logout', icon: iconLogout(), label: 'Sign Out' },
     ];
 
     const LECTURER_NAV = [
@@ -37,6 +39,7 @@
         { page: 'course-builder', href: '/lecturer/course-builder.html', icon: iconPencil(),      label: 'Course Builder' },
         { page: 'students',       href: '/lecturer/students.html',       icon: iconUsers(),       label: 'Students' },
         { page: 'assignments',    href: '/lecturer/assignments.html',    icon: iconClipboard(),   label: 'Assignments' },
+        { page: 'submissions',    href: '/lecturer/submissions.html',    icon: iconInbox(),       label: 'Submissions' },
         { page: 'gradebook',      href: '/lecturer/gradebook.html',      icon: iconChart(),       label: 'Gradebook' },
         { page: 'analytics',      href: '/lecturer/analytics.html',      icon: iconBarChart(),    label: 'Analytics' },
         { page: 'announcements',  href: '/lecturer/announcements.html',  icon: iconBell(),        label: 'Announcements' },
@@ -48,16 +51,19 @@
     ];
 
     const ADMIN_NAV = [
-        { page: 'dashboard',     href: '/admin/dashboard.html',     icon: iconGrid(),      label: 'Dashboard' },
-        { page: 'users',         href: '/admin/users.html',         icon: iconUsers(),     label: 'All Users' },
-        { page: 'lecturers',     href: '/admin/lecturers.html',     icon: iconBadge(),     label: 'Lecturers' },
-        { page: 'departments',   href: '/admin/departments.html',   icon: iconBuilding(),  label: 'Departments' },
-        { page: 'hierarchy',     href: '/admin/hierarchy.html',     icon: iconTree(),      label: 'Academic Hierarchy' },
-        { page: 'courses',       href: '/admin/courses.html',       icon: iconBook(),      label: 'Courses' },
-        { page: 'analytics',     href: '/admin/analytics.html',     icon: iconBarChart(),  label: 'Analytics' },
-        { page: 'logs',          href: '/admin/logs.html',          icon: iconShield(),    label: 'Activity Logs' },
-        { page: 'announcements', href: '/admin/announcements.html', icon: iconBell(),      label: 'Announcements' },
+        { page: 'dashboard',     href: '/admin/dashboard.html',     icon: iconGrid(),       label: 'Dashboard' },
+        { page: 'users',         href: '/admin/users.html',         icon: iconUsers(),      label: 'All Users' },
+        { page: 'lecturers',     href: '/admin/lecturers.html',     icon: iconBadge(),      label: 'Lecturers' },
+        { page: 'departments',   href: '/admin/departments.html',   icon: iconBuilding(),   label: 'Departments' },
+        { page: 'hierarchy',     href: '/admin/hierarchy.html',     icon: iconTree(),       label: 'Academic Hierarchy' },
+        { page: 'courses',       href: '/admin/courses.html',       icon: iconBook(),       label: 'Courses' },
+        { page: 'matric',        href: '/admin/matric.html',        icon: iconIdCard(),     label: 'Matric Numbers' },
+        { page: 'timetable',     href: '/admin/timetable.html',     icon: iconCalendar(),   label: 'Timetable' },
+        { page: 'analytics',     href: '/admin/analytics.html',     icon: iconBarChart(),   label: 'Analytics' },
+        { page: 'logs',          href: '/admin/logs.html',          icon: iconShield(),     label: 'Activity Logs' },
+        { page: 'announcements', href: '/admin/announcements.html', icon: iconBell(),       label: 'Announcements' },
     ];
+
 
     const ADMIN_ACCOUNT_NAV = [
         { page: 'settings', href: '/admin/settings.html',        icon: iconCog(),    label: 'Settings' },
@@ -90,6 +96,9 @@
     function iconShield()   { return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>'); }
     function iconBadge()    { return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>'); }
     function iconCog()      { return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'); }
+    function iconCalendar() { return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>'); }
+    function iconInbox()    { return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>'); }
+    function iconIdCard()   { return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0M9 14a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2"/>'); }
 
     // ── Build Sidebar HTML ──────────────────────────────────────────────
     function buildSidebarHtml(user, mainNav, accountNav, logoText) {
@@ -117,7 +126,7 @@
         <aside class="sidebar" id="app-sidebar">
             <div class="sidebar-header">
                 <a href="${user.role === 'admin' ? '/admin/dashboard.html' : user.role === 'lecturer' ? '/lecturer/dashboard.html' : '/student/dashboard.html'}" class="sidebar-logo">
-                    <div class="sidebar-logo-icon">AL</div>
+                    <img src="/assets/img/logo.png" alt="ALMS" class="sidebar-logo-icon" style="background:transparent; color:transparent; object-fit:contain; border-radius:0; padding:2px;">
                     <span class="sidebar-logo-text">${logoText}</span>
                 </a>
                 <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse Sidebar">
@@ -158,6 +167,9 @@
         const profileLink = user.role === 'student' ? '/student/profile.html' :
                             user.role === 'admin'   ? '#' : '#';
 
+        const notifLink = user.role === 'student' ? '/student/notifications.html' : 
+                          (user.role === 'admin' ? '/admin/announcements.html' : '/lecturer/announcements.html');
+
         return `
         <header class="topbar" id="app-topbar">
             <div class="topbar-left">
@@ -172,10 +184,10 @@
                 </div>
             </div>
             <div class="topbar-right">
-                <button class="topbar-notif" aria-label="Notifications" title="Notifications">
+                <a href="${notifLink}" class="topbar-notif" aria-label="Notifications" title="Notifications" style="text-decoration:none;">
                     ${iconBell()}
                     <span class="notification-badge" id="notif-badge" style="display:none;">0</span>
-                </button>
+                </a>
                 <a href="${profileLink}" class="topbar-avatar" title="Profile">${initials}</a>
             </div>
         </header>

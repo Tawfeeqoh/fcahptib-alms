@@ -5,6 +5,9 @@ RewriteEngine On
 # RewriteCond %{HTTPS} off
 # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Redirect site root to sign-in page
+RewriteRule ^$ /index.html [R=302,L]
+
 # Block direct access to sensitive files
 <FilesMatch "\.(sql|log|env|md)$">
     Order allow,deny
@@ -22,6 +25,12 @@ RewriteEngine On
     Deny from all
 </Files>
 
+# Protect one-time setup scripts
+<Files "set-admin-password.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
 # Prevent directory listing
 Options -Indexes
 
@@ -32,3 +41,4 @@ RewriteRule ^(.*)\.php$ /$1.html [R=301,L]
 # Custom error pages
 ErrorDocument 403 /index.html?error=forbidden
 ErrorDocument 404 /index.html?error=not_found
+

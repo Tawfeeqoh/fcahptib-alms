@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Timetable — ALMS</title>
+    <meta name="description" content="View your weekly lecture schedule — ALMS FCAH&PT Ibadan">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .timetable-grid {
+            display: grid;
+            grid-template-columns: 72px repeat(5, 1fr);
+            gap: 0;
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            background: var(--clr-surface);
+            min-width: 640px;
+        }
+        .tt-cell {
+            padding: 10px 8px;
+            border-right: 1px solid var(--clr-border-light);
+            border-bottom: 1px solid var(--clr-border-light);
+            min-height: 56px;
+            position: relative;
+            transition: background 0.15s ease;
+        }
+        .tt-cell:last-child { border-right: none; }
+        .tt-header {
+            background: var(--clr-bg);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--clr-text-secondary);
+            text-align: center;
+            padding: 14px 8px;
+            border-right: 1px solid var(--clr-border-light);
+            border-bottom: 1px solid var(--clr-border);
+        }
+        .tt-header:last-child { border-right: none; }
+        .tt-header.today-header {
+            background: var(--clr-primary-light);
+            color: var(--clr-primary);
+        }
+        .tt-time {
+            background: var(--clr-bg);
+            font-size: 0.6875rem;
+            font-family: var(--font-mono);
+            color: var(--clr-text-muted);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--clr-border);
+            border-bottom: 1px solid var(--clr-border-light);
+        }
+        .tt-slot {
+            background: var(--clr-surface);
+            border-right: 1px solid var(--clr-border-light);
+            border-bottom: 1px solid var(--clr-border-light);
+            min-height: 56px;
+            position: relative;
+        }
+        .tt-slot:last-child { border-right: none; }
+        .tt-slot.today-col { background: rgba(209,0,0,0.02); }
+        .tt-event {
+            position: absolute;
+            inset: 4px;
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.3;
+            overflow: hidden;
+            cursor: pointer;
+            transition: filter 0.15s ease, transform 0.15s ease;
+        }
+        .tt-event:hover { filter: brightness(1.08); transform: scale(1.01); }
+        .tt-event.color-red    { background: rgba(209,0,0,0.12); color: var(--clr-primary); border-left: 3px solid var(--clr-primary); }
+        .tt-event.color-blue   { background: rgba(37,99,235,0.1); color: #2563EB; border-left: 3px solid #2563EB; }
+        .tt-event.color-green  { background: rgba(5,150,105,0.1); color: #059669; border-left: 3px solid #059669; }
+        .tt-event.color-amber  { background: rgba(245,158,11,0.1); color: #D97706; border-left: 3px solid #D97706; }
+        .tt-event.color-purple { background: rgba(124,58,237,0.1); color: #7C3AED; border-left: 3px solid #7C3AED; }
+        .tt-event.color-teal   { background: rgba(20,184,166,0.1); color: #0D9488; border-left: 3px solid #0D9488; }
+        .tt-course-code { font-size: 0.6875rem; opacity: 0.75; margin-top: 2px; font-family: var(--font-mono); }
+        .tt-venue { font-size: 0.6rem; opacity: 0.6; margin-top: 1px; }
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .week-nav-btn {
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--clr-border-light);
+            background: var(--clr-surface);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--clr-text-secondary);
+            transition: all 0.15s ease;
+        }
+        .week-nav-btn:hover { background: var(--clr-bg); color: var(--clr-text); }
+        .today-btn {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 6px 14px;
+        }
+        .timetable-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+        }
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        /* Empty slot hover hint */
+        .tt-slot:hover:not(:has(.tt-event)) {
+            background: var(--clr-bg);
+        }
+        @media (max-width: 768px) {
+            .timetable-grid { grid-template-columns: 56px repeat(5, minmax(100px, 1fr)); }
+        }
+    </style>
+</head>
+<body class="film-grain" data-page="timetable">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+
+        <div class="page-content animate-fade-in" id="page-body">
+
+            <!-- Page Header -->
+            <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:var(--sp-6);">
+                <div>
+                    <h1 class="page-title">Weekly Timetable</h1>
+                    <p class="page-subtitle" id="week-range-label">Loading schedule...</p>
+                </div>
+                <div class="week-nav">
+                    <button class="week-nav-btn" id="btn-prev-week" title="Previous week">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline btn-sm today-btn" id="btn-today">Today</button>
+                    <button class="week-nav-btn" id="btn-next-week" title="Next week">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:var(--sp-4);" id="tt-legend">
+                <!-- Injected by JS -->
+            </div>
+
+            <!-- Timetable Grid Wrapper -->
+            <div class="timetable-wrapper reveal-element" id="timetable-wrapper">
+                <!-- Shimmer skeleton -->
+                <div class="animate-shimmer" style="height:480px;border-radius:var(--radius-xl);"></div>
+            </div>
+
+            <!-- Upcoming This Week summary -->
+            <div class="dashboard-widget reveal-element" style="margin-top:var(--sp-6);">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">
+                    <i class="fa-solid fa-calendar-day" style="color:var(--clr-primary);margin-right:8px;"></i>
+                    Upcoming Classes Today
+                </h3>
+                <div id="today-classes-list">
+                    <div class="animate-shimmer" style="height:56px;border-radius:var(--radius-md);"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const HOURS  = ['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const COLORS = ['color-red','color-blue','color-green','color-amber','color-purple','color-teal'];
+
+let scheduleData   = [];
+let colorMap       = {};
+let colorIdx       = 0;
+let currentMonday  = getMonday(new Date());
+
+// ── Init ──
+document.addEventListener('alms:session-ready', async function() {
+    await loadTimetable();
+    document.getElementById('btn-prev-week').addEventListener('click', () => { currentMonday = addDays(currentMonday, -7); renderWeek(); });
+    document.getElementById('btn-next-week').addEventListener('click', () => { currentMonday = addDays(currentMonday, 7); renderWeek(); });
+    document.getElementById('btn-today').addEventListener('click',    () => { currentMonday = getMonday(new Date()); renderWeek(); });
+});
+
+async function loadTimetable() {
+    try {
+        const res  = await fetch('/api/student-timetable.php', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) { scheduleData = data.schedule || []; }
+    } catch(e) {
+        // Use demo data when API not available
+        scheduleData = getDemoSchedule();
+    }
+    buildColorMap();
+    renderWeek();
+}
+
+function buildColorMap() {
+    scheduleData.forEach(entry => {
+        if (!colorMap[entry.course_code]) {
+            colorMap[entry.course_code] = COLORS[colorIdx % COLORS.length];
+            colorIdx++;
+        }
+    });
+}
+
+function renderWeek() {
+    const friday = addDays(currentMonday, 4);
+    const fmt = d => new Intl.DateTimeFormat('en-NG', { day:'numeric', month:'short' }).format(d);
+    document.getElementById('week-range-label').textContent = `${fmt(currentMonday)} – ${fmt(friday)} ${currentMonday.getFullYear()}`;
+
+    const today = new Date();
+    const todayDay = today.getDay(); // 0=Sun,1=Mon,...6=Sat
+
+    // Build grid HTML
+    let html = `<div class="timetable-grid">`;
+
+    // Header row
+    html += `<div class="tt-header"></div>`;
+    DAYS.forEach((day, i) => {
+        const cellDate   = addDays(currentMonday, i);
+        const isToday    = isSameDay(cellDate, today);
+        const dayNum     = cellDate.getDate();
+        html += `<div class="tt-header ${isToday ? 'today-header' : ''}">
+            ${day.slice(0,3)}<br>
+            <span style="font-size:0.875rem;font-weight:${isToday ? 800 : 600};color:${isToday ? 'var(--clr-primary)' : 'inherit'};">${dayNum}</span>
+        </div>`;
+    });
+
+    // Time rows
+    HOURS.forEach((time, hIdx) => {
+        const [hour] = time.split(':').map(Number);
+        html += `<div class="tt-time">${time}</div>`;
+
+        DAYS.forEach((day, dIdx) => {
+            const isToday = isSameDay(addDays(currentMonday, dIdx), today);
+            const entries = scheduleData.filter(e => e.day === day && e.start_hour === hour);
+            let inner = '';
+            entries.forEach(e => {
+                const color = colorMap[e.course_code] || 'color-red';
+                const span  = (e.duration_hours || 1);
+                inner += `<div class="tt-event ${color}" style="bottom:${(span-1)*-56}px;" title="${escHtml(e.course_name)} — ${escHtml(e.venue||'')}">
+                    <div>${escHtml(e.course_name)}</div>
+                    <div class="tt-course-code">${escHtml(e.course_code)}</div>
+                    ${e.venue ? `<div class="tt-venue"><i class="fa-solid fa-location-dot"></i> ${escHtml(e.venue)}</div>` : ''}
+                </div>`;
+            });
+            html += `<div class="tt-slot ${isToday ? 'today-col' : ''}">${inner}</div>`;
+        });
+    });
+
+    html += `</div>`;
+    document.getElementById('timetable-wrapper').innerHTML = html;
+
+    // Legend
+    const uniqueCodes = [...new Set(scheduleData.map(e => e.course_code))];
+    const legendHtml  = uniqueCodes.map(code => {
+        const entry = scheduleData.find(e => e.course_code === code);
+        const colorClass = colorMap[code] || 'color-red';
+        const colorStyle = getColorStyle(colorClass);
+        return `<span style="display:flex;align-items:center;gap:6px;font-size:0.8125rem;color:var(--clr-text-secondary);">
+            <span class="legend-dot" style="background:${colorStyle};"></span>
+            ${escHtml(code)}
+        </span>`;
+    }).join('');
+    document.getElementById('tt-legend').innerHTML = legendHtml;
+
+    // Today's classes list
+    const todayName = DAYS[todayDay - 1]; // Mon=1
+    const todayClasses = scheduleData
+        .filter(e => e.day === todayName)
+        .sort((a,b) => a.start_hour - b.start_hour);
+    
+    const todayList = document.getElementById('today-classes-list');
+    if (!todayName || todayClasses.length === 0) {
+        todayList.innerHTML = `<div class="empty-state"><div class="empty-state-icon"><i class="fa-solid fa-mug-hot" style="font-size:1.5rem;color:var(--clr-text-muted);"></i></div><p class="text-muted text-sm">No classes scheduled for today.</p></div>`;
+    } else {
+        todayList.innerHTML = todayClasses.map(e => {
+            const colorClass = colorMap[e.course_code] || 'color-red';
+            const borderColor = getColorStyle(colorClass);
+            const now  = new Date();
+            const startH = e.start_hour;
+            const endH   = startH + (e.duration_hours || 1);
+            const isNow  = now.getHours() >= startH && now.getHours() < endH;
+            const isPast = now.getHours() >= endH;
+            return `<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:var(--radius-md);background:var(--clr-bg);margin-bottom:8px;border-left:3px solid ${borderColor};${isNow ? 'box-shadow:0 0 0 2px '+borderColor+'33;' : ''}">
+                <div class="font-mono-data" style="font-size:0.8125rem;color:var(--clr-text-muted);min-width:48px;">${padHour(startH)}:00</div>
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:0.875rem;">${escHtml(e.course_name)}</div>
+                    <div style="font-size:0.75rem;color:var(--clr-text-muted);font-family:var(--font-mono);">${escHtml(e.course_code)}${e.venue ? ' · '+escHtml(e.venue) : ''}</div>
+                </div>
+                ${isNow  ? '<span class="badge badge-green"><i class="fa-solid fa-circle" style="font-size:6px;"></i> In Progress</span>' : ''}
+                ${isPast ? '<span class="badge badge-neutral">Done</span>' : ''}
+            </div>`;
+        }).join('');
+    }
+}
+
+// ── Demo schedule when API unavailable ──
+function getDemoSchedule() {
+    return [
+        { day:'Monday',    start_hour:8,  duration_hours:2, course_code:'AVH 111', course_name:'Animal Physiology I',   venue:'Lecture Theatre 1' },
+        { day:'Monday',    start_hour:11, duration_hours:1, course_code:'GST 101', course_name:'Use of English',        venue:'Room 3A' },
+        { day:'Tuesday',   start_hour:9,  duration_hours:1, course_code:'AVM 121', course_name:'Veterinary Anatomy',    venue:'Lab Block B' },
+        { day:'Tuesday',   start_hour:14, duration_hours:2, course_code:'AVH 111', course_name:'Animal Physiology I',   venue:'Practical Lab' },
+        { day:'Wednesday', start_hour:8,  duration_hours:1, course_code:'GST 101', course_name:'Use of English',        venue:'Room 3A' },
+        { day:'Wednesday', start_hour:10, duration_hours:1, course_code:'MAT 111', course_name:'Mathematics I',         venue:'Room 2B' },
+        { day:'Thursday',  start_hour:9,  duration_hours:2, course_code:'AVM 121', course_name:'Veterinary Anatomy',    venue:'Lab Block B' },
+        { day:'Friday',    start_hour:11, duration_hours:1, course_code:'MAT 111', course_name:'Mathematics I',         venue:'Room 2B' },
+        { day:'Friday',    start_hour:13, duration_hours:1, course_code:'GST 112', course_name:'Nigerian People & Culture', venue:'Room 5C' },
+    ];
+}
+
+// ── Utilities ──
+function getMonday(d) {
+    const day = d.getDay();
+    const diff = (day === 0) ? -6 : 1 - day;
+    const m = new Date(d);
+    m.setDate(d.getDate() + diff);
+    m.setHours(0,0,0,0);
+    return m;
+}
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function isSameDay(a, b) { return a.getDate()===b.getDate() && a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear(); }
+function padHour(h) { return String(h).padStart(2,'0'); }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function getColorStyle(cls) {
+    const map = {
+        'color-red':'#D10000','color-blue':'#2563EB','color-green':'#059669',
+        'color-amber':'#D97706','color-purple':'#7C3AED','color-teal':'#0D9488'
+    };
+    return map[cls] || '#D10000';
+}
+</script>
+</body>
+</html>

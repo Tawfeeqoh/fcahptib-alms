@@ -264,11 +264,19 @@
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
 }
 
 .topbar-date {
   font-size: 0.8125rem;
   color: var(--clr-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
 }
 
 .topbar-right {
@@ -376,16 +384,18 @@
 
 /* ── Mobile Sidebar Overlay ────────────────────────────── */
 .sidebar-overlay {
-  display: none;
+  display: block;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.4);
   z-index: 99;
   opacity: 0;
+  pointer-events: none;
   transition: opacity var(--duration-normal) ease;
 }
 .sidebar-overlay.active {
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* ── Notification Badge ─────────────────────────────────── */
@@ -436,9 +446,7 @@
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
-  .sidebar-overlay {
-    display: block;
-  }
+
   .main-content {
     margin-left: 0 !important;
   }

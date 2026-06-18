@@ -6,10 +6,14 @@ $input = readJsonInput();
 $action = $_GET['action'] ?? ($input['action'] ?? '');
 
 if ($action === 'logout') {
-    verifyCsrfFromRequest();
     $_SESSION = [];
     session_destroy();
-    apiJson(['success' => true, 'message' => 'Signed out successfully.']);
+    if (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) {
+        apiJson(['success' => true, 'message' => 'Signed out successfully.']);
+    } else {
+        header('Location: /index.html?msg=logged_out');
+        exit;
+    }
 }
 
 if ($action === 'login') {

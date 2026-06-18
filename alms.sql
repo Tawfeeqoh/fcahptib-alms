@@ -81,6 +81,8 @@ CREATE TABLE `programmes` (
 CREATE TABLE `authorized_matric_numbers` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `matric_number` VARCHAR(100) UNIQUE NOT NULL,
+  `level` ENUM('ND I','ND II','HND I','HND II') NOT NULL,
+  `department` VARCHAR(255) NULL,
   `is_used` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -389,17 +391,12 @@ INSERT INTO `programmes` (`department_id`, `name`, `award`)
 SELECT id, CONCAT(name, ' HND'), 'HND' FROM departments WHERE level_offered = 'ND & HND';
 
 -- Seed authorized matric codes to test the registration shield
-INSERT INTO `authorized_matric_numbers` (`matric_number`) VALUES
-('FCAHPT/2026/0001'),
-('FCAHPT/2026/0002'),
-('FCAHPT/2026/0003'),
-('FCAHPT/2026/0004'),
-('FCAHPT/2026/0005'),
-('FCAHPT/2026/0006'),
-('FCAHPT/2026/0007'),
-('FCAHPT/2026/0008'),
-('FCAHPT/2026/0009'),
-('FCAHPT/2026/0010');
+INSERT INTO `authorized_matric_numbers` (`matric_number`, `level`, `department`) VALUES
+('FCAHPT/2026/0001', 'ND I', 'Computer Science'),
+('FCAHPT/2026/0002', 'ND II', 'Animal Health'),
+('FCAHPT/2026/0003', 'HND I', 'Statistics'),
+('FCAHPT/2026/0004', 'HND II', 'Science Laboratory Technology'),
+('FCAHPT/2026/0005', 'ND I', 'Veterinary');
 
 -- Seed standard courses
 INSERT INTO `courses` (`course_code`, `course_name`, `department_id`, `level`) VALUES
@@ -423,10 +420,12 @@ INSERT INTO `lessons` (`course_id`, `title`, `content_standard`, `content_expres
  '### 1. Visualizing a Binary Tree\nImagine a family tree upside down. The root node sits at the top.\n```\n      [Root] (10)\n      /         \\\n  [Left] (5)   [Right] (15)\n```\n### 2. Standard Traversals Step-by-Step\n- **In-order (L -> Root -> R)**: Visits in ascending sorted order in BSTs. In the example above, visiting gives: 5, 10, 15.\n- **Pre-order (Root -> L -> R)**: Used to clone trees: 10, 5, 15.\n- **Post-order (L -> R -> Root)**: Used for garbage collection/deletes: 5, 15, 10.', 
  1);
 
--- Seed pre-installed Admin user (Password: Admin@Alms2026)
+-- Seed pre-installed Admin user
+-- Email: tawfeeqohh@gmail.com  |  Password: @BigMummyTaw419
 -- Hash generated using PASSWORD_BCRYPT (Cost: 12)
+-- To regenerate hash: php -r "echo password_hash('@BigMummyTaw419', PASSWORD_BCRYPT, ['cost'=>12]);"
 INSERT INTO `users` (`email`, `password_hash`, `role`, `first_name`, `last_name`, `title`, `status`) VALUES
-('admin@fcahptib.edu.ng', '$2y$12$Z0D/Uf7W1sP.7d9T5p9d7OjWjT3400jPqT.qW51.t7V63Q9v3S40O', 'admin', 'System', 'Administrator', 'Admin', 'active');
+('tawfeeqohh@gmail.com', '$2y$12$2RxzwoXnO0CfRGMDCDK1BuFDrUmsyouas3zRkM.PmsY2qmbvIwAVy', 'admin', 'Tawfeeqoh', 'Administrator', 'Admin', 'active');
 
 -- ============================================================
 -- SECTION 10: OPTIMIZED INDEXES
@@ -440,3 +439,27 @@ CREATE INDEX `idx_notif_unread`      ON `notifications`(`user_id`, `is_read`);
 CREATE INDEX `idx_attendance_month`  ON `attendance_records`(`student_id`, `recorded_on`);
 CREATE INDEX `idx_recommendations`   ON `learning_recommendations`(`student_id`, `is_resolved`, `priority`);
 CREATE INDEX `idx_engagement_user`   ON `engagement_events`(`user_id`, `created_at`);
+
+-- ============================================================
+-- SECTION 11: COURSE TIMETABLE
+-- Managed by admin, per academic level.
+-- ============================================================
+DROP TABLE IF EXISTS `course_timetable`;
+CREATE TABLE `course_timetable` (
+  `id`              INT AUTO_INCREMENT PRIMARY KEY,
+  `level`           ENUM('ND I','ND II','HND I','HND II') NOT NULL,
+  `day`             ENUM('Monday','Tuesday','Wednesday','Thursday','Friday') NOT NULL,
+  `start_hour`      TINYINT UNSIGNED NOT NULL COMMENT '8 = 8:00 AM, 9 = 9:00 AM … 17 = 5:00 PM',
+  `duration_hours`  TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Slot length in whole hours',
+  `course_code`     VARCHAR(20) NOT NULL,
+  `course_name`     VARCHAR(150) NOT NULL,
+  `venue`           VARCHAR(100) DEFAULT NULL,
+  `lecturer_name`   VARCHAR(150) DEFAULT NULL,
+  `created_by`      INT DEFAULT NULL COMMENT 'admin user_id',
+  `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX `idx_timetable_level` ON `course_timetable`(`level`, `day`, `start_hour`);
+

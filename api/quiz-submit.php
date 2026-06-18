@@ -50,6 +50,11 @@ try {
     $percentage = ($score / $total) * 100;
     $passed = $percentage >= 50 ? 1 : 0;
 
+    // Check if already passed
+    $checkPass = $db->prepare("SELECT id FROM quiz_attempts WHERE quiz_id = ? AND student_id = ? AND passed = 1 LIMIT 1");
+    $checkPass->execute([$quiz_id, $_SESSION['user_id']]);
+    $alreadyPassed = $checkPass->fetch() ? true : false;
+
     // 3. Save attempt
     $attempt = $db->prepare("
         INSERT INTO quiz_attempts (quiz_id, student_id, score, percentage, passed) 
@@ -58,9 +63,12 @@ try {
     $attempt->execute([$quiz_id, $_SESSION['user_id'], $score, $percentage, $passed]);
     $attemptId = (int)$db->lastInsertId();
 
-    $xp = $passed ? 50 : 20;
-    if ($percentage >= 80) $xp += 25;
-    awardXp((int)$_SESSION['user_id'], $xp, 'quiz_attempt', $attemptId, 'Quiz attempt completed');
+    if (!$alreadyPassed) {
+        $xp = $passed ? 50 : 20;
+        if ($percentage >= 80) $xp += 25;
+        awardXp((int)$_SESSION['user_id'], $xp, 'quiz_attempt', $attemptId, 'Quiz attempt completed');
+    }
+    
     generateQuizRecommendation((int)$_SESSION['user_id'], $quiz_id, $percentage);
 
     // Customize encouragement based on wellness

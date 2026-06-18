@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lecturer Dashboard — ALMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
     <link rel="stylesheet" href="/assets/css/globals.css">
     <link rel="stylesheet" href="/assets/css/components.css">
     <link rel="stylesheet" href="/assets/css/layout.css">
@@ -14,7 +19,7 @@
 <!-- Pending Verification Overlay -->
 <div id="pending-view" style="display:none; background:var(--clr-bg); justify-content:center; align-items:center; min-height:100vh; padding: var(--sp-6);">
     <div class="glass-card-strong text-center" style="max-width:500px; padding:var(--sp-12);">
-        <div style="font-size:4rem; margin-bottom:var(--sp-4);">⏳</div>
+        <div style="font-size:3rem; margin-bottom:var(--sp-4); color:var(--clr-warning);"><i class="fa-solid fa-hourglass-half"></i></div>
         <h1 class="hero-text-cinematic mb-4" style="font-size:1.75rem;">Account Verification Pending</h1>
         <p class="text-secondary" style="line-height:1.6; margin-bottom:var(--sp-6);">
             Welcome <span id="pending-lecturer-name">Lecturer</span>! Your lecturer registration has been logged. An administrator must verify and approve your staff profile before you can access the curriculum tools.
@@ -32,7 +37,7 @@
             <!-- Stats Widgets Row -->
             <div class="stats-row mb-6">
                 <div class="stat-card">
-                    <div class="stat-card-icon blue">📖</div>
+                    <div class="stat-card-icon blue"><i class="fa-solid fa-book-open"></i></div>
                     <div>
                         <div class="stat-card-value font-mono-data" id="stat-courses">—</div>
                         <div class="stat-card-label">Active Courses</div>
@@ -40,7 +45,7 @@
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-card-icon green">🎓</div>
+                    <div class="stat-card-icon green"><i class="fa-solid fa-user-graduate"></i></div>
                     <div>
                         <div class="stat-card-value font-mono-data" id="stat-students">—</div>
                         <div class="stat-card-label">Teachable Students</div>
@@ -48,7 +53,7 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-card-icon red">🧠</div>
+                    <div class="stat-card-icon red"><i class="fa-solid fa-brain"></i></div>
                     <div>
                         <div class="stat-card-value font-mono-data" id="stat-stress">—</div>
                         <div class="stat-card-label">High Stress Load</div>
@@ -56,7 +61,7 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-card-icon amber">🔔</div>
+                    <div class="stat-card-icon amber"><i class="fa-solid fa-file-arrow-up"></i></div>
                     <div>
                         <div class="stat-card-value font-mono-data" id="stat-submissions">—</div>
                         <div class="stat-card-label">Recent Submissions</div>
@@ -101,7 +106,7 @@
                         <div style="display:flex; flex-direction:column; gap:12px;">
                             <div>
                                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                                    <span>⚡ Express Mode</span>
+                                    <span><i class="fa-solid fa-bolt" style="color:var(--clr-warning);margin-right:6px;"></i>Express Mode</span>
                                     <span class="font-mono-data" id="pace-express-pct">0%</span>
                                 </div>
                                 <div class="progress-bar"><div class="progress-bar-fill amber" id="pace-express-bar" style="width:0%;"></div></div>
@@ -109,7 +114,7 @@
 
                             <div>
                                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                                    <span>📖 Standard Mode</span>
+                                    <span><i class="fa-solid fa-book" style="color:var(--clr-info);margin-right:6px;"></i>Standard Mode</span>
                                     <span class="font-mono-data" id="pace-standard-pct">0%</span>
                                 </div>
                                 <div class="progress-bar"><div class="progress-bar-fill blue" id="pace-standard-bar" style="width:0%;"></div></div>
@@ -117,7 +122,7 @@
 
                             <div>
                                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                                    <span>🔬 Deep-Dive Mode</span>
+                                    <span><i class="fa-solid fa-microscope" style="color:var(--clr-primary);margin-right:6px;"></i>Deep-Dive Mode</span>
                                     <span class="font-mono-data" id="pace-deep-pct">0%</span>
                                 </div>
                                 <div class="progress-bar"><div class="progress-bar-fill" id="pace-deep-bar" style="width:0%;"></div></div>
@@ -132,7 +137,7 @@
                         <div style="display:flex; flex-direction:column; gap:12px;">
                             <div>
                                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                                    <span>🟢 Low Stress</span>
+                                    <span><i class="fa-solid fa-circle" style="color:var(--clr-success);margin-right:6px;font-size:0.6em;"></i>Low Stress</span>
                                     <span class="font-mono-data" id="stress-low-pct">0%</span>
                                 </div>
                                 <div class="progress-bar"><div class="progress-bar-fill green" id="stress-low-bar" style="width:0%;"></div></div>
@@ -140,7 +145,7 @@
 
                             <div>
                                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                                    <span>🟡 Moderate Stress</span>
+                                    <span><i class="fa-solid fa-circle" style="color:var(--clr-warning);margin-right:6px;font-size:0.6em;"></i>Moderate Stress</span>
                                     <span class="font-mono-data" id="stress-medium-pct">0%</span>
                                 </div>
                                 <div class="progress-bar"><div class="progress-bar-fill amber" id="stress-medium-bar" style="width:0%;"></div></div>
@@ -148,7 +153,7 @@
 
                             <div>
                                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                                    <span>🔴 High Stress</span>
+                                    <span><i class="fa-solid fa-circle" style="color:var(--clr-primary);margin-right:6px;font-size:0.6em;"></i>High Stress</span>
                                     <span class="font-mono-data" id="stress-high-pct">0%</span>
                                 </div>
                                 <div class="progress-bar"><div class="progress-bar-fill" id="stress-high-bar" style="width:0%;"></div></div>
@@ -213,7 +218,7 @@ document.addEventListener('alms:session-ready', async function() {
         coursesCont.innerHTML = courses.map(ac => `
             <div class="course-card reveal-element depth-lift">
                 <div class="course-card-header">
-                    <div class="course-card-icon">📚</div>
+                    <div class="course-card-icon"><i class="fa-solid fa-book"></i></div>
                     <span class="badge badge-neutral">${escHtml(ac.level)}</span>
                 </div>
                 <div>
@@ -313,3 +318,5 @@ function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&
 </script>
 </body>
 </html>
+
+

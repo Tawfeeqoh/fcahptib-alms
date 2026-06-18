@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Management — ALMS Admin</title>
+    <meta name="description" content="Manage course timetables by academic level — ALMS Admin">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="admin"></script>
+    <style>
+        .level-tab {
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--clr-border-light);
+            background: transparent;
+            color: var(--clr-text-secondary);
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .level-tab:hover { background: var(--clr-bg); }
+        .level-tab.active { background: var(--clr-primary); color: #fff; border-color: var(--clr-primary); }
+
+        /* Timetable grid */
+        .tt-grid {
+            display: grid;
+            grid-template-columns: 64px repeat(5, 1fr);
+            border: 1px solid var(--clr-border-light);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            min-width: 580px;
+            font-size: 0.75rem;
+        }
+        .tt-head {
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--clr-text-secondary);
+            background: var(--clr-bg);
+            border-right: 1px solid var(--clr-border-light);
+            border-bottom: 1px solid var(--clr-border);
+        }
+        .tt-head:last-child { border-right: none; }
+        .tt-time {
+            background: var(--clr-bg);
+            font-family: var(--font-mono);
+            font-size: 0.625rem;
+            color: var(--clr-text-muted);
+            text-align: center;
+            display: flex; align-items: center; justify-content: center;
+            border-right: 1px solid var(--clr-border);
+            border-bottom: 1px solid var(--clr-border-light);
+            min-height: 52px;
+        }
+        .tt-slot {
+            border-right: 1px solid var(--clr-border-light);
+            border-bottom: 1px solid var(--clr-border-light);
+            min-height: 52px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .tt-slot:last-child { border-right: none; }
+        .tt-slot:hover { background: rgba(209,0,0,0.03); }
+        .tt-event {
+            position: absolute;
+            inset: 3px;
+            border-radius: 6px;
+            padding: 5px 7px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            line-height: 1.3;
+            overflow: hidden;
+            border-left: 3px solid var(--clr-primary);
+            background: rgba(209,0,0,0.1);
+            color: var(--clr-primary);
+            cursor: pointer;
+            transition: filter 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .tt-event:hover { filter: brightness(1.08); }
+        .tt-event-code { font-family: var(--font-mono); font-size: 0.6rem; opacity: 0.75; }
+        .tt-event-del {
+            position: absolute;
+            top: 3px; right: 3px;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--clr-primary);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+        }
+        .tt-event:hover .tt-event-del { display: flex; }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+            animation: fadeIn 0.15s ease;
+        }
+        .modal-card {
+            background: var(--clr-surface);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--sp-6);
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeInUp 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (max-width: 640px) {
+            .modal-card { padding: var(--sp-4); }
+        }
+        @media (max-width: 768px) {
+            .tt-wrap { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body class="film-grain" data-page="timetable">
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+        <div class="page-content animate-fade-in" id="page-body">
+
+            <!-- Page Header -->
+            <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:var(--sp-6);">
+                <div>
+                    <h1 class="page-title">Timetable Management</h1>
+                    <p class="page-subtitle">Set weekly lecture schedules per academic level. Students see their own level's timetable.</p>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-outline btn-sm" id="btn-clear-level">
+                        <i class="fa-solid fa-trash"></i> Clear This Level
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="btn-add-slot" disabled>
+                        <i class="fa-solid fa-plus"></i> Add Slot
+                    </button>
+                </div>
+            </div>
+
+            <!-- Level Tabs -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--sp-5);" id="level-tabs">
+                <button class="level-tab" data-level="ND I">ND I</button>
+                <button class="level-tab" data-level="ND II">ND II</button>
+                <button class="level-tab" data-level="HND I">HND I</button>
+                <button class="level-tab" data-level="HND II">HND II</button>
+            </div>
+
+            <!-- Prompt before level selected -->
+            <div id="select-prompt" class="dashboard-widget text-center" style="padding:48px 24px;">
+                <i class="fa-solid fa-calendar-week" style="font-size:2.5rem;color:var(--clr-text-muted);margin-bottom:16px;display:block;"></i>
+                <p style="font-weight:700;font-size:1rem;margin-bottom:8px;">Select a Level</p>
+                <p class="text-secondary text-sm">Choose ND I, ND II, HND I, or HND II above to view or edit that level's timetable.</p>
+            </div>
+
+            <!-- Timetable Grid -->
+            <div class="dashboard-widget reveal-element" id="tt-card" style="padding:0;overflow:hidden;display:none;">
+                <div class="tt-wrap" style="overflow-x:auto;padding:16px;">
+                    <div class="tt-grid" id="tt-grid">
+                        <!-- Built by JS -->
+                    </div>
+                </div>
+                <p class="text-secondary" style="font-size:0.75rem;padding:10px 20px;border-top:1px solid var(--clr-border-light);">
+                    <i class="fa-solid fa-info-circle" style="margin-right:4px;"></i>
+                    Click an empty cell to add a slot. Hover a slot and click <strong>&times;</strong> to delete.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Add Slot Modal -->
+<div id="slot-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-backdrop" onclick="closeModal(event, this)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5);">
+                <h2 id="modal-title" style="font-size:1.125rem;font-weight:700;">Add Timetable Slot</h2>
+                <button onclick="closeModal()" style="background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--clr-text-muted);">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-flash"></div>
+            <form id="slot-form" novalidate>
+                <div style="display:flex;flex-direction:column;gap:var(--sp-4);">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="input-group" style="margin:0;">
+                            <label for="slot-day">Day</label>
+                            <select id="slot-day" class="input-field" required>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label for="slot-start">Start Time</label>
+                            <select id="slot-start" class="input-field" required>
+                                <option value="8">8:00 AM</option>
+                                <option value="9">9:00 AM</option>
+                                <option value="10">10:00 AM</option>
+                                <option value="11">11:00 AM</option>
+                                <option value="12">12:00 PM</option>
+                                <option value="13">1:00 PM</option>
+                                <option value="14">2:00 PM</option>
+                                <option value="15">3:00 PM</option>
+                                <option value="16">4:00 PM</option>
+                                <option value="17">5:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="slot-duration">Duration</label>
+                        <select id="slot-duration" class="input-field">
+                            <option value="1">1 Hour</option>
+                            <option value="2">2 Hours</option>
+                            <option value="3">3 Hours</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="slot-code">Course Code</label>
+                        <input type="text" id="slot-code" class="input-field" placeholder="e.g. AVH 111" required
+                            style="font-family:var(--font-mono);text-transform:uppercase;">
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="slot-name">Course Name</label>
+                        <input type="text" id="slot-name" class="input-field" placeholder="e.g. Animal Physiology I" required>
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="slot-venue">Venue <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
+                        <input type="text" id="slot-venue" class="input-field" placeholder="e.g. Lecture Theatre 1">
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="slot-lecturer">Lecturer <span style="color:var(--clr-text-muted);font-weight:400;">(optional)</span></label>
+                        <input type="text" id="slot-lecturer" class="input-field" placeholder="e.g. Dr. Adeyemi">
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:var(--sp-6);">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="flex:1;">Cancel</button>
+                    <button type="submit" id="slot-submit" class="btn btn-primary" style="flex:1;">
+                        <i class="fa-solid fa-check"></i> Save Slot
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:var(--radius-md);
+    display:none;align-items:center;gap:10px;font-size:0.875rem;font-weight:600;z-index:9999;box-shadow:var(--shadow-lg);"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const DAYS  = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const HOURS = [8,9,10,11,12,13,14,15,16,17];
+
+let csrfToken    = '';
+let currentLevel = '';
+let slots        = [];
+let prefillDay, prefillHour;
+
+document.addEventListener('alms:session-ready', async function() {
+    try {
+        const r = await fetch('/api/session.php', { credentials: 'include' });
+        const d = await r.json();
+        csrfToken = d.csrf_token || '';
+    } catch(e) {}
+
+    // Level tabs
+    document.querySelectorAll('.level-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentLevel = this.dataset.level;
+            document.getElementById('btn-add-slot').disabled = false;
+            document.getElementById('select-prompt').style.display = 'none';
+            document.getElementById('tt-card').style.display = 'block';
+            loadSlots();
+        });
+    });
+
+    document.getElementById('btn-add-slot').addEventListener('click', () => openModal());
+    document.getElementById('btn-clear-level').addEventListener('click', clearLevel);
+    document.getElementById('slot-form').addEventListener('submit', saveSlot);
+});
+
+async function loadSlots() {
+    if (!currentLevel) return;
+    try {
+        const res  = await fetch(`/api/admin-timetable.php?level=${encodeURIComponent(currentLevel)}`, { credentials: 'include' });
+        const data = await res.json();
+        slots = data.success ? (data.slots || []) : [];
+    } catch(e) { slots = []; }
+    renderGrid();
+}
+
+function renderGrid() {
+    const grid = document.getElementById('tt-grid');
+    let html = '';
+
+    // Header row
+    html += '<div class="tt-head"></div>';
+    DAYS.forEach(day => { html += `<div class="tt-head">${day.slice(0,3)}</div>`; });
+
+    // Time rows
+    HOURS.forEach(hour => {
+        const label = hour <= 12 ? `${hour}:00` : `${hour-12}:00`;
+        html += `<div class="tt-time">${label}</div>`;
+
+        DAYS.forEach(day => {
+            const entry = slots.find(s => s.day === day && Number(s.start_hour) === hour);
+            if (entry) {
+                html += `<div class="tt-slot">
+                    <div class="tt-event" onclick="openModal('${escHtml(entry.id)}')">
+                        <button class="tt-event-del" onclick="event.stopPropagation();deleteSlot(${entry.id})" title="Delete">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                        <div>${escHtml(entry.course_name)}</div>
+                        <div class="tt-event-code">${escHtml(entry.course_code)}</div>
+                        ${entry.venue ? `<div style="font-size:0.5625rem;opacity:0.65;">${escHtml(entry.venue)}</div>` : ''}
+                    </div>
+                </div>`;
+            } else {
+                // Check if this hour is covered by a multi-hour slot above
+                const covered = slots.some(s => s.day === day && Number(s.start_hour) < hour
+                    && Number(s.start_hour) + Number(s.duration_hours) > hour);
+                if (covered) {
+                    html += `<div class="tt-slot" style="background:rgba(209,0,0,0.04);cursor:default;"></div>`;
+                } else {
+                    html += `<div class="tt-slot" onclick="openModal(null,'${day}',${hour})" title="Add slot"></div>`;
+                }
+            }
+        });
+    });
+
+    grid.innerHTML = html;
+}
+
+function openModal(slotId, day, hour) {
+    const modal = document.getElementById('slot-modal');
+    document.getElementById('modal-flash').innerHTML = '';
+
+    if (slotId && slotId !== 'null') {
+        // Edit existing
+        const entry = slots.find(s => String(s.id) === String(slotId));
+        if (entry) {
+            document.getElementById('slot-day').value      = entry.day;
+            document.getElementById('slot-start').value    = entry.start_hour;
+            document.getElementById('slot-duration').value = entry.duration_hours;
+            document.getElementById('slot-code').value     = entry.course_code;
+            document.getElementById('slot-name').value     = entry.course_name;
+            document.getElementById('slot-venue').value    = entry.venue || '';
+            document.getElementById('slot-lecturer').value = entry.lecturer_name || '';
+            document.getElementById('slot-form').dataset.editId = entry.id;
+        }
+    } else {
+        // New slot
+        document.getElementById('slot-day').value      = day || 'Monday';
+        document.getElementById('slot-start').value    = hour || 8;
+        document.getElementById('slot-duration').value = 1;
+        document.getElementById('slot-code').value     = '';
+        document.getElementById('slot-name').value     = '';
+        document.getElementById('slot-venue').value    = '';
+        document.getElementById('slot-lecturer').value = '';
+        delete document.getElementById('slot-form').dataset.editId;
+    }
+    document.getElementById('modal-title').textContent = slotId && slotId !== 'null' ? 'Edit Timetable Slot' : 'Add Timetable Slot';
+    modal.style.display = 'flex';
+}
+
+function closeModal(e, backdrop) {
+    if (e && backdrop && e.target !== backdrop) return;
+    document.getElementById('slot-modal').style.display = 'none';
+}
+
+async function saveSlot(e) {
+    e.preventDefault();
+    const editId = document.getElementById('slot-form').dataset.editId;
+    const btn    = document.getElementById('slot-submit');
+    const flash  = document.getElementById('modal-flash');
+    flash.innerHTML = '';
+
+    const code = document.getElementById('slot-code').value.trim().toUpperCase();
+    const name = document.getElementById('slot-name').value.trim();
+    if (!code || !name) {
+        flash.innerHTML = '<div class="flash-msg error" style="margin-bottom:12px;"><i class="fa-solid fa-triangle-exclamation"></i><span>Course code and name are required.</span></div>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    const body = {
+        action:         editId ? 'update' : 'add',
+        level:          currentLevel,
+        day:            document.getElementById('slot-day').value,
+        start_hour:     parseInt(document.getElementById('slot-start').value),
+        duration_hours: parseInt(document.getElementById('slot-duration').value),
+        course_code:    code,
+        course_name:    name,
+        venue:          document.getElementById('slot-venue').value.trim(),
+        lecturer_name:  document.getElementById('slot-lecturer').value.trim(),
+        csrf_token:     csrfToken,
+    };
+    if (editId) body.id = parseInt(editId);
+
+    try {
+        const res  = await fetch('/api/admin-timetable.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeModal();
+            showToast(data.message, 'success');
+            await loadSlots();
+        } else {
+            flash.innerHTML = `<div class="flash-msg error" style="margin-bottom:12px;"><i class="fa-solid fa-triangle-exclamation"></i><span>${escHtml(data.message)}</span></div>`;
+        }
+    } catch(err) {
+        flash.innerHTML = '<div class="flash-msg error" style="margin-bottom:12px;"><i class="fa-solid fa-wifi"></i><span>Network error.</span></div>';
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Save Slot';
+}
+
+async function deleteSlot(id) {
+    if (!confirm('Delete this timetable slot?')) return;
+    try {
+        const res  = await fetch('/api/admin-timetable.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id, csrf_token: csrfToken }),
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Slot deleted.', 'success'); await loadSlots(); }
+        else               showToast(data.message || 'Error deleting.', 'error');
+    } catch(e) { showToast('Network error.', 'error'); }
+}
+
+async function clearLevel() {
+    if (!currentLevel) return;
+    if (!confirm(`Delete the ENTIRE timetable for ${currentLevel}? This cannot be undone.`)) return;
+    try {
+        const res  = await fetch('/api/admin-timetable.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clear_level', level: currentLevel, csrf_token: csrfToken }),
+        });
+        const data = await res.json();
+        if (data.success) { showToast(data.message, 'success'); await loadSlots(); }
+        else               showToast(data.message || 'Error.', 'error');
+    } catch(e) { showToast('Network error.', 'error'); }
+}
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.style.background = type === 'success' ? 'var(--clr-success)' : 'var(--clr-danger)';
+    t.style.color = '#fff';
+    t.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${escHtml(msg)}`;
+    t.style.display = 'flex';
+    clearTimeout(window._toast);
+    window._toast = setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

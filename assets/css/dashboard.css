@@ -103,7 +103,7 @@
 .sidebar-section-label {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: var(--clr-text-muted);
+  color: var(--clr-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: var(--sp-4) var(--sp-4) var(--sp-2);
@@ -399,6 +399,24 @@
   }
   .topbar-hamburger {
     display: flex;
+    width: 32px;
+    height: 32px;
+  }
+  .topbar-hamburger svg {
+    width: 20px;
+    height: 20px;
+  }
+  .topbar-notif, .topbar-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+  .topbar-notif svg {
+    width: 20px;
+    height: 20px;
+  }
+  .topbar {
+    padding: 0 var(--sp-4);
   }
   .stats-row, .stats-row-5 {
     grid-template-columns: 1fr;

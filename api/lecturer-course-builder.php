@@ -73,13 +73,27 @@ if ($method === 'POST') {
         $file_path = '/uploads/materials/generic.txt';
 
         if (isset($_FILES['material_file']) && $_FILES['material_file']['error'] === UPLOAD_ERR_OK) {
+            $allowedExt = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'zip'];
+            $originalName = basename($_FILES['material_file']['name']);
+            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            $maxBytes = 25 * 1024 * 1024; // 25 MB
+
+            if (!in_array($ext, $allowedExt, true)) {
+                apiJson(['success' => false, 'message' => 'Invalid file extension. Only PDF, DOC, DOCX, PPT, PPTX, and ZIP files are allowed.'], 422);
+            }
+
+            if ($_FILES['material_file']['size'] > $maxBytes) {
+                apiJson(['success' => false, 'message' => 'File size exceeds the 25 MB limit.'], 422);
+            }
+
             // Ensure directory exists
             $uploadDir = __DIR__ . '/../uploads/materials/';
             if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
+                mkdir($uploadDir, 0755, true);
             }
-            $fileName = basename($_FILES['material_file']['name']);
-            $file_path = '/uploads/materials/' . time() . '_' . $fileName;
+            
+            $safeName = time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+            $file_path = '/uploads/materials/' . $safeName;
             move_uploaded_file($_FILES['material_file']['tmp_name'], __DIR__ . '/..' . $file_path);
         }
 

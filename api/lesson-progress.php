@@ -21,17 +21,28 @@ if ($lesson_id <= 0) {
 $db = db();
 
 try {
-    // 1. Mark lesson as complete (ignore if already done)
+    // 1. Fetch current course_id and sequence of this lesson
+    $lessonInfo = $db->prepare("SELECT course_id, sequence_order FROM lessons WHERE id = ?");
+    $lessonInfo->execute([$lesson_id]);
+    $curr = $lessonInfo->fetch();
+
+    if (!$curr) {
+        apiJson(['success' => false, 'message' => 'Lesson not found.'], 404);
+    }
+
+    // 2. Verify student is enrolled in the course
+    $enrolledStmt = $db->prepare("SELECT id FROM student_course_enrollments WHERE student_id = ? AND course_id = ?");
+    $enrolledStmt->execute([$_SESSION['user_id'], $curr['course_id']]);
+    if (!$enrolledStmt->fetch()) {
+        apiJson(['success' => false, 'message' => 'Unauthorized. You are not enrolled in this course.'], 403);
+    }
+
+    // 3. Mark lesson as complete (ignore if already done)
     $stmt = $db->prepare("INSERT IGNORE INTO lesson_progress (student_id, lesson_id) VALUES (?, ?)");
     $stmt->execute([$_SESSION['user_id'], $lesson_id]);
     if ($stmt->rowCount() > 0) {
         awardXp((int)$_SESSION['user_id'], 25, 'lesson_complete', $lesson_id, 'Lesson module completed');
     }
-
-    // 2. Fetch current course_id and sequence of this lesson
-    $lessonInfo = $db->prepare("SELECT course_id, sequence_order FROM lessons WHERE id = ?");
-    $lessonInfo->execute([$lesson_id]);
-    $curr = $lessonInfo->fetch();
 
     $next_lesson_id = null;
     if ($curr) {

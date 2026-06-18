@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications — ALMS</title>
+    <meta name="description" content="Your notifications — ALMS FCAH&PT Ibadan">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
+    <link rel="stylesheet" href="/assets/css/globals.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/layout.css">
+    <script src="/assets/js/auth-guard.js" data-role="student"></script>
+    <style>
+        .notif-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--clr-border-light);
+            transition: background 0.15s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: var(--clr-bg); }
+        .notif-item.unread { background: rgba(209,0,0,0.03); }
+        .notif-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--clr-primary);
+            border-radius: 0 2px 2px 0;
+        }
+        .notif-icon {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .notif-icon.type-assignment { background: rgba(37,99,235,0.12); color: #2563EB; }
+        .notif-icon.type-announcement { background: rgba(209,0,0,0.1); color: var(--clr-primary); }
+        .notif-icon.type-grade  { background: rgba(5,150,105,0.1); color: #059669; }
+        .notif-icon.type-badge  { background: rgba(245,158,11,0.12); color: #D97706; }
+        .notif-icon.type-system { background: var(--clr-bg); color: var(--clr-text-muted); }
+        .notif-icon.type-quiz   { background: rgba(124,58,237,0.1); color: #7C3AED; }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--clr-text);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .notif-item.unread .notif-title { font-weight: 700; }
+        .notif-desc {
+            font-size: 0.8125rem;
+            color: var(--clr-text-secondary);
+            line-height: 1.5;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .notif-time {
+            font-size: 0.6875rem;
+            font-family: var(--font-mono);
+            color: var(--clr-text-muted);
+            white-space: nowrap;
+            margin-top: 2px;
+        }
+        .notif-unread-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--clr-primary);
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--clr-border-light);
+            background: transparent;
+            color: var(--clr-text-secondary);
+            transition: all 0.15s ease;
+        }
+        .filter-tab:hover { background: var(--clr-bg); color: var(--clr-text); }
+        .filter-tab.active {
+            background: var(--clr-primary);
+            color: #FFF;
+            border-color: var(--clr-primary);
+        }
+    </style>
+</head>
+<body class="film-grain" data-page="notifications">
+
+<div class="dashboard-shell">
+    <div id="sidebar-container"></div>
+
+    <div class="main-content" id="main-content">
+        <div id="topbar-container"></div>
+
+        <div class="page-content animate-fade-in" id="page-body">
+
+            <!-- Page Header -->
+            <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:var(--sp-6);">
+                <div>
+                    <h1 class="page-title">Notifications</h1>
+                    <p class="page-subtitle" id="unread-count-label">Loading...</p>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="btn-mark-all">
+                    <i class="fa-solid fa-check-double"></i>
+                    Mark all as read
+                </button>
+            </div>
+
+            <!-- Filter Tabs + Card -->
+            <div class="dashboard-widget" style="padding:0;overflow:hidden;">
+
+                <!-- Tabs -->
+                <div style="padding:16px 20px;border-bottom:1px solid var(--clr-border-light);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div class="filter-tabs" id="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All</button>
+                        <button class="filter-tab" data-filter="announcement"><i class="fa-solid fa-bullhorn"></i> Announcements</button>
+                        <button class="filter-tab" data-filter="assignment"><i class="fa-solid fa-file-alt"></i> Assignments</button>
+                        <button class="filter-tab" data-filter="grade"><i class="fa-solid fa-star"></i> Grades</button>
+                        <button class="filter-tab" data-filter="badge"><i class="fa-solid fa-trophy"></i> Achievements</button>
+                        <button class="filter-tab" data-filter="quiz"><i class="fa-solid fa-question-circle"></i> Quizzes</button>
+                    </div>
+                </div>
+
+                <!-- Notification List -->
+                <div id="notif-list">
+                    <!-- Skeletons -->
+                    <div style="padding:16px 20px;display:flex;gap:16px;border-bottom:1px solid var(--clr-border-light);">
+                        <div class="animate-shimmer" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                            <div class="animate-shimmer" style="height:14px;border-radius:7px;width:60%;"></div>
+                            <div class="animate-shimmer" style="height:12px;border-radius:6px;width:85%;"></div>
+                        </div>
+                    </div>
+                    <div style="padding:16px 20px;display:flex;gap:16px;border-bottom:1px solid var(--clr-border-light);">
+                        <div class="animate-shimmer" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                            <div class="animate-shimmer" style="height:14px;border-radius:7px;width:50%;"></div>
+                            <div class="animate-shimmer" style="height:12px;border-radius:6px;width:75%;"></div>
+                        </div>
+                    </div>
+                    <div style="padding:16px 20px;display:flex;gap:16px;">
+                        <div class="animate-shimmer" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                            <div class="animate-shimmer" style="height:14px;border-radius:7px;width:70%;"></div>
+                            <div class="animate-shimmer" style="height:12px;border-radius:6px;width:55%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/main.js"></script>
+<script>
+const TYPE_ICONS = {
+    announcement: { icon: 'fa-bullhorn',     cls: 'type-announcement' },
+    assignment:   { icon: 'fa-file-alt',     cls: 'type-assignment' },
+    grade:        { icon: 'fa-star',         cls: 'type-grade' },
+    badge:        { icon: 'fa-trophy',       cls: 'type-badge' },
+    quiz:         { icon: 'fa-question-circle', cls: 'type-quiz' },
+    system:       { icon: 'fa-circle-info',  cls: 'type-system' },
+};
+
+let allNotifs  = [];
+let activeFilter = 'all';
+
+document.addEventListener('alms:session-ready', async function() {
+    await loadNotifications();
+
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            activeFilter = this.dataset.filter;
+            renderNotifications();
+        });
+    });
+
+    // Mark all read
+    document.getElementById('btn-mark-all').addEventListener('click', markAllRead);
+});
+
+async function loadNotifications() {
+    try {
+        const res  = await fetch('/api/notifications.php?action=list&limit=50', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) { allNotifs = data.notifications || []; }
+    } catch(e) {
+        allNotifs = getDemoNotifications();
+    }
+    renderNotifications();
+}
+
+function renderNotifications() {
+    const filtered = activeFilter === 'all'
+        ? allNotifs
+        : allNotifs.filter(n => n.type === activeFilter);
+
+    const unread = filtered.filter(n => !n.is_read).length;
+    const total  = allNotifs.filter(n => !n.is_read).length;
+    document.getElementById('unread-count-label').textContent =
+        total > 0 ? `${total} unread notification${total !== 1 ? 's' : ''}` : 'All caught up';
+
+    const list = document.getElementById('notif-list');
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state" style="padding:48px 24px;">
+            <div class="empty-state-icon"><i class="fa-solid fa-bell-slash" style="font-size:2rem;color:var(--clr-text-muted);"></i></div>
+            <p class="text-muted text-sm">No ${activeFilter === 'all' ? '' : activeFilter} notifications yet.</p>
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map((n, idx) => {
+        const meta   = TYPE_ICONS[n.type] || TYPE_ICONS.system;
+        const timeAgo = formatTimeAgo(new Date(n.created_at));
+        return `<div class="notif-item ${n.is_read ? '' : 'unread'}" data-id="${n.id}" data-idx="${idx}" onclick="markRead(this, ${idx})">
+            <div class="notif-icon ${meta.cls}">
+                <i class="fa-solid ${meta.icon}"></i>
+            </div>
+            <div class="notif-body">
+                <div class="notif-title">${escHtml(n.title)}</div>
+                <div class="notif-desc">${escHtml(n.message)}</div>
+                <div class="notif-time"><i class="fa-regular fa-clock" style="margin-right:4px;"></i>${timeAgo}</div>
+            </div>
+            ${!n.is_read ? '<div class="notif-unread-dot"></div>' : ''}
+        </div>`;
+    }).join('');
+}
+
+function markRead(el, idx) {
+    const n = allNotifs[idx];
+    if (!n || n.is_read) return;
+    n.is_read = true;
+    el.classList.remove('unread');
+    const dot = el.querySelector('.notif-unread-dot');
+    if (dot) dot.remove();
+    // Remove red border indicator
+    fetch('/api/notifications.php', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_read', id: n.id, csrf_token: window.ALMS?.csrfToken || '' })
+    }).catch(() => {});
+    renderNotifications();
+}
+
+async function markAllRead() {
+    allNotifs.forEach(n => n.is_read = true);
+    renderNotifications();
+    try {
+        await fetch('/api/notifications.php', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'mark_all_read', csrf_token: window.ALMS?.csrfToken || '' })
+        });
+    } catch(e) {}
+}
+
+function getDemoNotifications() {
+    const now = new Date();
+    const sub = (h) => new Date(now.getTime() - h*3600000).toISOString();
+    return [
+        { id:1, type:'announcement', title:'Mid-Semester Break Notice', message:'Lectures will be suspended from the 20th – 24th. All practical sessions are rescheduled for after the break. Check the timetable for updates.', is_read:false, created_at: sub(1) },
+        { id:2, type:'assignment',   title:'New Assignment: AVH 111 Lab Report', message:'Dr. Adeyemi posted a new assignment due June 25. Submit your lab report on Animal Physiology practical observations.', is_read:false, created_at: sub(3) },
+        { id:3, type:'grade',        title:'GST 101 Assignment Graded', message:'Your assignment "Use of English – Essay" has been graded. You scored 82/100. View your feedback in the gradebook.', is_read:false, created_at: sub(6) },
+        { id:4, type:'badge',        title:'Achievement Unlocked: 7-Day Streak!', message:'Congratulations! You have maintained a 7-day learning streak. You earned 150 XP and the "Consistent Learner" badge.', is_read:true, created_at: sub(24) },
+        { id:5, type:'quiz',         title:'Quiz Available: MAT 111 Chapter 3', message:'A new quiz for Mathematics I Chapter 3 is now available. Complete it by Friday to earn bonus XP.', is_read:true, created_at: sub(30) },
+        { id:6, type:'system',       title:'ALMS v2.1 Update', message:'New features: improved AI assistant responses, timetable view, and enhanced analytics. Explore the updates in your dashboard.', is_read:true, created_at: sub(48) },
+        { id:7, type:'announcement', title:'Library Access Extended', message:'The college library will now remain open until 9PM on weekdays to support students during exam preparation season.', is_read:true, created_at: sub(72) },
+    ];
+}
+
+function formatTimeAgo(date) {
+    const diffMs   = Date.now() - date.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    if (diffMins < 1)   return 'Just now';
+    if (diffMins < 60)  return `${diffMins}m ago`;
+    const diffHrs = Math.round(diffMins / 60);
+    if (diffHrs < 24)   return `${diffHrs}h ago`;
+    const diffDays = Math.round(diffHrs / 24);
+    if (diffDays < 7)   return `${diffDays}d ago`;
+    return new Intl.DateTimeFormat('en-NG', { dateStyle:'medium' }).format(date);
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

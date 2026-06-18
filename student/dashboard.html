@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard — ALMS</title>
     <meta name="description" content="Your adaptive learning dashboard — ALMS FCAH&PT Ibadan">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/assets/img/logo.png">
     <link rel="stylesheet" href="/assets/css/globals.css">
     <link rel="stylesheet" href="/assets/css/components.css">
     <link rel="stylesheet" href="/assets/css/layout.css">
@@ -27,7 +32,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-4);">
                     <div>
                         <p id="welcome-dept" style="font-size:0.875rem;opacity:0.85;margin-bottom:4px;"></p>
-                        <h2 id="welcome-name" style="font-family:var(--font-heading);font-size:1.5rem;font-weight:800;color:#FFF;margin-bottom:var(--sp-2);">Welcome back 👋</h2>
+                        <h2 id="welcome-name" style="font-family:var(--font-heading);font-size:1.5rem;font-weight:800;color:#FFF;margin-bottom:var(--sp-2);">Welcome back</h2>
                         <p id="welcome-quote" style="font-size:0.875rem;opacity:0.75;">Your learning journey continues today.</p>
                     </div>
                     <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;" id="profile-tags">
@@ -43,23 +48,23 @@
                         <h3 style="font-size:1rem;font-weight:700;">Wellness Pulse Check</h3>
                         <p class="text-secondary" style="font-size:0.8125rem;margin-top:2px;">How are you feeling right now?</p>
                     </div>
-                    <span id="wellness-saved-badge" class="badge badge-green" style="display:none;">Saved ✓</span>
+                    <span id="wellness-saved-badge" class="badge badge-green" style="display:none;"><i class="fa-solid fa-check"></i> Saved</span>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);">
                     <div>
                         <p style="font-size:0.8125rem;font-weight:600;margin-bottom:var(--sp-2);">Attention Span</p>
                         <div style="display:flex;gap:var(--sp-2);">
-                            <button class="wellness-btn level-low" data-type="attention" data-value="low">🟢 Low</button>
-                            <button class="wellness-btn level-medium" data-type="attention" data-value="medium">🟡 Medium</button>
-                            <button class="wellness-btn level-high" data-type="attention" data-value="high">🔴 High</button>
+                            <button class="wellness-btn level-low" data-type="attention" data-value="low"><i class="fa-solid fa-face-smile" style="color:#22c55e;"></i> Low</button>
+                            <button class="wellness-btn level-medium" data-type="attention" data-value="medium"><i class="fa-solid fa-face-meh" style="color:#f59e0b;"></i> Medium</button>
+                            <button class="wellness-btn level-high" data-type="attention" data-value="high"><i class="fa-solid fa-face-tired" style="color:var(--clr-primary);"></i> High</button>
                         </div>
                     </div>
                     <div>
                         <p style="font-size:0.8125rem;font-weight:600;margin-bottom:var(--sp-2);">Stress Level</p>
                         <div style="display:flex;gap:var(--sp-2);">
-                            <button class="wellness-btn level-low" data-type="stress" data-value="low">😌 Low</button>
-                            <button class="wellness-btn level-medium" data-type="stress" data-value="medium">😐 Medium</button>
-                            <button class="wellness-btn level-high" data-type="stress" data-value="high">😰 High</button>
+                            <button class="wellness-btn level-low" data-type="stress" data-value="low"><i class="fa-solid fa-face-smile-beam" style="color:#22c55e;"></i> Low</button>
+                            <button class="wellness-btn level-medium" data-type="stress" data-value="medium"><i class="fa-solid fa-face-meh" style="color:#f59e0b;"></i> Medium</button>
+                            <button class="wellness-btn level-high" data-type="stress" data-value="high"><i class="fa-solid fa-face-anxious-sweat" style="color:var(--clr-primary);"></i> High</button>
                         </div>
                     </div>
                 </div>
@@ -114,8 +119,8 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:var(--sp-4);align-items:center;">
-                    <a href="/student/achievements.html" class="btn btn-outline btn-sm">View Achievements 🏆</a>
-                    <a href="/student/recommendations.html" class="btn btn-ghost btn-sm">Recommendations 💡</a>
+                    <a href="/student/achievements.html" class="btn btn-outline btn-sm"><i class="fa-solid fa-trophy"></i> View Achievements</a>
+                    <a href="/student/recommendations.html" class="btn btn-ghost btn-sm"><i class="fa-solid fa-lightbulb"></i> Recommendations</a>
                 </div>
                 <div id="quick-recs" style="display:flex;flex-direction:column;gap:var(--sp-2);"></div>
             </div>
@@ -184,15 +189,17 @@
 
                     <!-- AI Assistant CTA -->
                     <div class="reveal-element" style="background:linear-gradient(135deg,var(--clr-primary),#8B0000);border-radius:var(--radius-2xl);padding:var(--sp-6);color:#FFF;">
-                        <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🤖</div>
+                        <div style="width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:var(--sp-3);">
+                            <i class="fa-solid fa-robot" style="font-size:1.25rem;"></i>
+                        </div>
                         <h3 style="color:#FFF;font-size:1rem;font-weight:700;margin-bottom:var(--sp-2);">AI Learning Assistant</h3>
                         <p id="ai-adaptive-msg" style="font-size:0.8125rem;opacity:0.85;margin-bottom:var(--sp-4);">Your personalized academic tutor is ready for you.</p>
-                        <a href="/student/ai-assistant.html" class="btn" style="background:rgba(255,255,255,0.2);color:#FFF;border-color:rgba(255,255,255,0.4);">Chat Now →</a>
+                        <a href="/student/ai-assistant.html" class="btn" style="background:rgba(255,255,255,0.2);color:#FFF;border-color:rgba(255,255,255,0.4);">Chat Now <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
 
                     <!-- Announcements -->
                     <div class="dashboard-widget reveal-element">
-                        <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);">📢 Announcements</h3>
+                        <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--sp-4);display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-bullhorn" style="color:var(--clr-primary);"></i> Announcements</h3>
                         <div style="display:flex;flex-direction:column;gap:var(--sp-3);" id="announcements-list">
                             <div style="padding:var(--sp-3);background:var(--clr-bg);border-radius:var(--radius-md);font-size:0.875rem;">
                                 <strong>Mid-Semester Break Notice</strong>
@@ -254,7 +261,6 @@ document.addEventListener('alms:session-ready', async function(e) {
     document.getElementById('welcome-quote').textContent = getMotivationalQuote(p.who5_score);
 
     // Profile tags
-    const varkColors = { V:'#7C3AED', A:'#DB2777', R:'#2563EB', K:'#059669' };
     const varkLabels = { V:'Visual', A:'Auditory', R:'Reading', K:'Kinesthetic' };
     const vark = p.vark_style || 'V';
     const pace = p.current_pace || 'standard';
@@ -271,9 +277,9 @@ document.addEventListener('alms:session-ready', async function(e) {
 
     // ── Gamification ──
     document.getElementById('game-badges').innerHTML = `
-        <span class="badge badge-red">⭐ ${g.total_xp || 0} XP</span>
-        <span class="badge badge-blue">🛡 Level ${g.level || 1}</span>
-        <span class="badge badge-green">🔥 ${g.current_streak || 0} Day Streak</span>
+        <span class="badge badge-red"><i class="fa-solid fa-star"></i> ${g.total_xp || 0} XP</span>
+        <span class="badge badge-blue"><i class="fa-solid fa-shield"></i> Level ${g.level || 1}</span>
+        <span class="badge badge-green"><i class="fa-solid fa-fire"></i> ${g.current_streak || 0} Day Streak</span>
     `;
     if (recs.length > 0) {
         document.getElementById('quick-recs').innerHTML = recs.map(r => `
@@ -328,7 +334,7 @@ document.addEventListener('alms:session-ready', async function(e) {
                 </div>`;
         }).join('');
     } else {
-        document.getElementById('deadlines-list').innerHTML = `<div class="empty-state"><div class="empty-state-icon" style="width:48px;height:48px;">✅</div><p style="font-size:0.875rem;color:var(--clr-text-muted);">No upcoming deadlines.</p></div>`;
+        document.getElementById('deadlines-list').innerHTML = `<div class="empty-state"><div class="empty-state-icon"><i class="fa-solid fa-circle-check" style="color:var(--clr-success);"></i></div><p style="font-size:0.875rem;color:var(--clr-text-muted);">No upcoming deadlines.</p></div>`;
     }
 
     // ── Attendance Grid ──
@@ -398,9 +404,9 @@ async function saveWellness() {
 
 // ── Helpers ──
 function getMotivationalQuote(who5) {
-    if (!who5 || who5 > 17) return 'You\'re thriving! Keep pushing your limits. 🔥';
-    if (who5 > 12) return 'Good energy today. Let\'s make the most of it. 📚';
-    return 'Feeling a bit under? Take it easy — your wellness matters. 💙';
+    if (!who5 || who5 > 17) return 'You\'re thriving! Keep pushing your limits.';
+    if (who5 > 12) return 'Good energy today. Let\'s make the most of it.';
+    return 'Feeling a bit under? Take it easy — your wellness matters.';
 }
 
 function capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''; }

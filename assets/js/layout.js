@@ -161,7 +161,7 @@
     function buildTopbarHtml(user) {
         const title = user.title || (user.role === 'student' ? 'Student' : user.role === 'admin' ? 'Admin' : 'Lecturer');
         const greeting = user.role === 'admin'
-            ? `Welcome Admin ${escHtml(user.last_name || '')}`
+            ? `Welcome ${escHtml(user.first_name || '')}`
             : `Welcome ${escHtml(title)} ${escHtml(user.first_name || '')}`;
         const initials = getInitials(user);
         const profileLink = user.role === 'student' ? '/student/profile.html' :
@@ -355,7 +355,7 @@
         } else {
             mainNav    = ADMIN_NAV;
             accountNav = ADMIN_ACCOUNT_NAV;
-            logoText   = 'ALMS Admin';
+            logoText   = 'ALMS';
         }
 
         // Inject sidebar

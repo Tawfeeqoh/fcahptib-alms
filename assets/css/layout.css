@@ -101,14 +101,16 @@
 }
 
 .sidebar-section-label {
-  font-size: 0.6875rem;
+  display: block;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--clr-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: var(--sp-4) var(--sp-4) var(--sp-2);
-  white-space: nowrap;
-  overflow: hidden;
+  line-height: normal;
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-2);
+  padding: 0 var(--sp-4);
 }
 
 .sidebar-footer {

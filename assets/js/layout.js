@@ -205,12 +205,10 @@
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // ── Sidebar Behavior ─────────────────────────────────────────────────
     function initSidebarBehaviors() {
         const sidebar = document.getElementById('app-sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         const collapseBtn = document.getElementById('sidebar-collapse-btn');
-        const hamburger = document.getElementById('topbar-hamburger');
 
         if (!sidebar) return;
 
@@ -224,14 +222,19 @@
             localStorage.setItem('alms-sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
         });
 
-        hamburger && hamburger.addEventListener('click', () => {
-            sidebar.classList.add('mobile-open');
-            overlay && overlay.classList.add('active');
-        });
-
-        overlay && overlay.addEventListener('click', () => {
-            sidebar.classList.remove('mobile-open');
-            overlay.classList.remove('active');
+        // Event delegation for hamburger to bypass DOM injection timing bugs on mobile Safari
+        document.body.addEventListener('click', (e) => {
+            const btn = e.target.closest('#topbar-hamburger');
+            if (btn) {
+                sidebar.classList.add('mobile-open');
+                if (overlay) overlay.classList.add('active');
+            }
+            
+            // Handle overlay click to close
+            if (e.target.id === 'sidebar-overlay') {
+                sidebar.classList.remove('mobile-open');
+                if (overlay) overlay.classList.remove('active');
+            }
         });
     }
 

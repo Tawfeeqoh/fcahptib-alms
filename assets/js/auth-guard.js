@@ -63,8 +63,13 @@
 
             document.documentElement.style.visibility = 'visible';
 
-            // Dispatch ready event
-            document.dispatchEvent(new CustomEvent('alms:session-ready', { detail: data.user }));
+            // Dispatch ready event after DOM is fully parsed to prevent race conditions with inline scripts
+            const dispatch = () => document.dispatchEvent(new CustomEvent('alms:session-ready', { detail: data.user }));
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', dispatch);
+            } else {
+                dispatch();
+            }
         })
         .catch(() => {
             // Network error — redirect to login
